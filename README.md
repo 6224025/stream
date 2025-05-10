@@ -6,6 +6,7 @@ docker compose up -d --build
 
 ## コンテナストップ
 ```
+docker stop stream-app-1
 exit
 ```
 
