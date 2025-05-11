@@ -4,10 +4,11 @@ docker compose up -d --build
 ```
 
 
-## コンテナストップ
+### コンテナストップ
 ```
+docker stop stream-app-1
 exit
 ```
 
-## リンク
+### リンク
 http://localhost:8501/
