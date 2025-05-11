@@ -2,27 +2,18 @@
 import streamlit as st
 
 # --- アプリのバージョン情報 ---
-APP_VERSION = "v0.3.1"  # アプリを更新するたびにここを変更
+APP_VERSION = "v0.1.0"  # アプリを更新するたびにここを変更
 
-# --- アプリ情報・リリースノートの内容 ---
-# 更新履歴は最新のものが一番上にくるように記述
-RELEASE_NOTES_HISTORY = f"""
-- **v0.3.1 (YYYY-MM-DD)**
-    - 整理: リリースノート関連の処理を `constants.py` に集約。
-    - 修正: `st.experimental_rerun` に起因する `AttributeError` を修正 (Streamlitバージョンアップを推奨)。
-- **v0.3.0 (YYYY-MM-DD)**
-    - 新機能: アプリ更新時に初回のみ更新情報を表示する機能を追加。
-    - 修正: 日本語フォントライブラリを `matplotlib-fontja` に変更。
-    - 改善: 凡例の表示/非表示ロジックを調整。
-    - 改善: 近似直線の描画範囲をグラフのX軸全体に拡大。
-    - 改善: データ点の凡例ラベルをユーザーが指定可能に。
-    - 修正: 格子線を削除。
-- **v0.2.0 (YYYY-MM-DD)**
-    - 機能: 軸ラベルの物理量を斜体で表示する説明を追加。
-    - 機能: グラフダウンロード機能 (PNG, SVG) を追加。
-- **v0.1.0 (YYYY-MM-DD)**
-    - 初期リリース: 基本的なグラフ描画、最小二乗法フィッティング機能。
-"""
+
+def load_release_notes(filepath="release_notes.md"):
+    try:
+        with open(filepath, "r", encoding="utf-8") as f:
+            return f.read()
+    except FileNotFoundError:
+        return "リリースノートファイルが見つかりません。"
+
+RELEASE_NOTES_HISTORY = load_release_notes() 
+
 
 # modules/constants.py 内の get_latest_release_notes_summary() 関数を再度置き換え
 
@@ -104,7 +95,7 @@ def get_latest_release_notes_summary():
 
 # --- GitHubリポジトリ情報 ---
 # ご自身のGitHubリポジトリのURLに置き換えてください
-GITHUB_REPO_URL = "https://github.com/yourusername/your-repo-name" # 例
+GITHUB_REPO_URL = "https://github.com/6224025/stream" # 例
 
 # --- 初回更新情報表示ロジック ---
 def show_initial_update_notification():

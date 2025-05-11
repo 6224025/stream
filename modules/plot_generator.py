@@ -2,9 +2,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-
 def create_figure_and_axes(graph_settings):
-    """基本的なFigureとAxesオブジェクトを作成し、軸ラベル等を設定する"""
+    # ... (変更なし) ...
     fig, ax = plt.subplots(figsize=(10, 7))
     ax.set_xlabel(graph_settings["x_label"])
     ax.set_ylabel(graph_settings["y_label"])
@@ -13,81 +12,143 @@ def create_figure_and_axes(graph_settings):
     return fig, ax
 
 def set_plot_scale(ax, plot_type):
-    """グラフ種類に応じて軸のスケールを設定する"""
+    # ... (変更なし) ...
     if plot_type == "片対数 (Y軸対数)": ax.set_yscale('log')
     elif plot_type == "片対数 (X軸対数)": ax.set_xscale('log')
     elif plot_type == "両対数":
         ax.set_xscale('log')
         ax.set_yscale('log')
-    # "通常" はデフォルトの線形スケール
 
 def plot_data_points(ax, df, graph_settings):
-    """元データをプロットする"""
+    # ... (変更なし) ...
     if graph_settings["show_legend"]:
         ax.plot(df['x'], df['y'], 'o', label=graph_settings["data_legend_label"], markersize=5)
     else:
         ax.plot(df['x'], df['y'], 'o', markersize=5)
 
-def plot_fit_line(ax, x_data_orig, fit_results, plot_type, graph_settings):
-    """フィッティング結果に基づいて近似直線/曲線を描画する"""
-    if fit_results is None or fit_results.get("slope_val") is None or fit_results.get("error_message"): # 修正: "slope" -> "slope_val"
-        return # フィット失敗時は描画しない
 
-    plot_xlim = ax.get_xlim() # 現在のX軸表示範囲
+def determine_final_axis_ranges(ax, graph_settings, x_data_orig=None, y_data_orig=None):
+    """
+    データ点プロット後のaxオブジェクトと設定に基づき、最終的なX軸・Y軸の範囲を計算して返す。
+    この時点では ax.set_xlim/ylim は行わない。
+    """
+    # データ点プロット後の現在の(自動調整された)軸範囲を取得
+    current_xlim_auto = ax.get_xlim()
+    current_ylim_auto = ax.get_ylim()
+
+    final_xlim_to_return = list(current_xlim_auto)
+    final_ylim_to_return = list(current_ylim_auto)
+
+    # 原点表示オプション
+    if graph_settings.get('force_origin_visible', False) and \
+       ax.get_xscale() != 'log' and ax.get_yscale() != 'log':
+        final_xlim_to_return[0] = min(0, final_xlim_to_return[0])
+        final_xlim_to_return[1] = max(0, final_xlim_to_return[1])
+        final_ylim_to_return[0] = min(0, final_ylim_to_return[0])
+        final_ylim_to_return[1] = max(0, final_ylim_to_return[1])
     
-    # X軸のスケールに合わせて点を生成
-    if ax.get_xscale() == 'log':
-        # xlimが負や0を含まないように注意 (通常は自動で調整されるはず)
-        x_start = plot_xlim[0] if plot_xlim[0] > 0 else np.finfo(float).eps
-        x_end = plot_xlim[1] if plot_xlim[1] > 0 else x_start * 100 # 仮
-        if x_start >= x_end: # 範囲がおかしい場合のフォールバック
-             x_start = np.min(x_data_orig[x_data_orig > 0]) if np.any(x_data_orig > 0) else 1e-3
-             x_end = np.max(x_data_orig[x_data_orig > 0]) if np.any(x_data_orig > 0) else 1e+3
-        x_fit_line = np.geomspace(x_start, x_end, 200)
+    # 手動での軸範囲設定 (これが最優先)
+    if graph_settings.get('manual_x_axis', False):
+        x_min_setting = graph_settings.get('x_axis_min')
+        x_max_setting = graph_settings.get('x_axis_max')
+        if x_min_setting is not None and x_max_setting is not None and x_min_setting < x_max_setting:
+            # 対数軸の場合、0以下は適切に処理
+            if ax.get_xscale() == 'log':
+                x_min_final_manual = x_min_setting if x_min_setting > 0 else \
+                                     (np.min(x_data_orig[x_data_orig>0]) if x_data_orig is not None and np.any(x_data_orig>0) else np.finfo(float).eps)
+                x_max_final_manual = x_max_setting if x_max_setting > x_min_final_manual else \
+                                     (np.max(x_data_orig[x_data_orig>0]) if x_data_orig is not None and np.any(x_data_orig>0) and np.max(x_data_orig[x_data_orig>0]) > x_min_final_manual else x_min_final_manual * 100)
+                if x_min_final_manual < x_max_final_manual:
+                    final_xlim_to_return = [x_min_final_manual, x_max_final_manual]
+            else:
+                final_xlim_to_return = [x_min_setting, x_max_setting]
+        else:
+            print("Manual X axis range is invalid, using auto/origin-adjusted range.")
 
-    else:
-        x_fit_line = np.linspace(plot_xlim[0], plot_xlim[1], 200)
-    # フィット結果からパラメータの値を取得
+    if graph_settings.get('manual_y_axis', False):
+        y_min_setting = graph_settings.get('y_axis_min')
+        y_max_setting = graph_settings.get('y_axis_max')
+        if y_min_setting is not None and y_max_setting is not None and y_min_setting < y_max_setting:
+            if ax.get_yscale() == 'log':
+                y_min_final_manual = y_min_setting if y_min_setting > 0 else \
+                                     (np.min(y_data_orig[y_data_orig>0]) if y_data_orig is not None and np.any(y_data_orig>0) else np.finfo(float).eps)
+                y_max_final_manual = y_max_setting if y_max_setting > y_min_final_manual else \
+                                     (np.max(y_data_orig[y_data_orig>0]) if y_data_orig is not None and np.any(y_data_orig>0) and np.max(y_data_orig[y_data_orig>0]) > y_min_final_manual else y_min_final_manual * 100)
+                if y_min_final_manual < y_max_final_manual:
+                    final_ylim_to_return = [y_min_final_manual, y_max_final_manual]
+            else:
+                final_ylim_to_return = [y_min_setting, y_max_setting]
+        else:
+            print("Manual Y axis range is invalid, using auto/origin-adjusted range.")
+            
+    return tuple(final_xlim_to_return), tuple(final_ylim_to_return)
+
+
+def plot_fit_line_on_final_axes(ax, final_xlim_to_use, x_data_orig, fit_results, plot_type, graph_settings):
+    """
+    指定された最終X軸範囲 (final_xlim_to_use) に基づいて近似直線/曲線を描画する。
+    """
+    if fit_results is None or fit_results.get("slope_val") is None or fit_results.get("error_message"):
+        return
+
+    current_x_scale = ax.get_xscale()
+
+    if current_x_scale == 'log':
+        x_start_for_line = final_xlim_to_use[0] if final_xlim_to_use[0] > 0 else np.finfo(float).eps
+        x_end_for_line = final_xlim_to_use[1]
+        if x_start_for_line >= x_end_for_line: # フォールバック
+             x_data_positive = x_data_orig[x_data_orig > 0]
+             x_start_for_line = np.min(x_data_positive) if np.any(x_data_positive) else 1e-3
+             x_end_for_line = np.max(x_data_positive) if np.any(x_data_positive) else 1e+3
+             if x_start_for_line >= x_end_for_line: x_start_for_line=1e-1; x_end_for_line=1e1;
+        x_fit_line = np.geomspace(x_start_for_line, x_end_for_line, 200)
+    else: # 線形スケール
+        x_fit_line = np.linspace(final_xlim_to_use[0], final_xlim_to_use[1], 200)
+
+    # Y値の計算 (旧plot_fit_lineのロジック)
     slope_val = fit_results.get("slope_val")
     intercept_val = fit_results.get("intercept_val")
     A_val = fit_results.get("A_val")
     B_val = fit_results.get("B_val")
+    y_pred_line = np.zeros_like(x_fit_line, dtype=float)
 
-    y_pred_line = np.zeros_like(x_fit_line, dtype=float) # dtypeを指定
-
+    # ... (y_pred_line の計算ロジック - 前の回答と同様。エラー時のreturnはpassに変更) ...
+    can_plot_fit = True
     if plot_type == "通常":
-        if slope_val is not None and intercept_val is not None:
-            y_pred_line = slope_val * x_fit_line + intercept_val
-        else: return # パラメータがない場合は描画しない
-    elif plot_type == "片対数 (Y軸対数)": # y = A*exp(B*x)
-        if A_val is not None and B_val is not None:
-            y_pred_line = A_val * np.exp(B_val * x_fit_line)
-        else: return
-    elif plot_type == "片対数 (X軸対数)": # y = B*ln(x) + A
-        if A_val is not None and B_val is not None and np.all(x_fit_line > 0):
-             y_pred_line = B_val * np.log(x_fit_line) + A_val
-        else: return 
-    elif plot_type == "両対数": # y = A*x^B
-        if A_val is not None and B_val is not None and np.all(x_fit_line > 0):
-            y_pred_line = A_val * (x_fit_line ** B_val)
-        else: return
-    else: # 未知のプロットタイプ
-        return
+        if slope_val is not None and intercept_val is not None: y_pred_line = slope_val * x_fit_line + intercept_val
+        else: can_plot_fit = False
+    elif plot_type == "片対数 (Y軸対数)":
+        if A_val is not None and B_val is not None: y_pred_line = A_val * np.exp(B_val * x_fit_line)
+        else: can_plot_fit = False
+    elif plot_type == "片対数 (X軸対数)":
+        if A_val is not None and B_val is not None and np.all(x_fit_line > 0): y_pred_line = B_val * np.log(x_fit_line) + A_val
+        else: can_plot_fit = False
+    elif plot_type == "両対数":
+        if A_val is not None and B_val is not None and np.all(x_fit_line > 0): y_pred_line = A_val * (x_fit_line ** B_val)
+        else: can_plot_fit = False
+    else:
+        can_plot_fit = False
 
-    # 描画範囲外やNaNになる可能性のある値をフィルタリング
-    valid_plot_indices = np.isfinite(y_pred_line)
-    if ax.get_yscale() == 'log':
-        valid_plot_indices &= (y_pred_line > 0)
-    
-    if np.any(valid_plot_indices):
-        if graph_settings["show_legend"]:
-            ax.plot(x_fit_line[valid_plot_indices], y_pred_line[valid_plot_indices], '--', label='近似')
-        else:
-            ax.plot(x_fit_line[valid_plot_indices], y_pred_line[valid_plot_indices], '--')
+    if can_plot_fit and np.any(y_pred_line): # 何か計算されていたらプロット
+        valid_plot_indices = np.isfinite(y_pred_line)
+        if ax.get_yscale() == 'log': # Y軸スケールも現在のものを参照
+            valid_plot_indices &= (y_pred_line > 0)
+        
+        if np.any(valid_plot_indices):
+            if graph_settings["show_legend"]:
+                ax.plot(x_fit_line[valid_plot_indices], y_pred_line[valid_plot_indices], '--', label='近似')
+            else:
+                ax.plot(x_fit_line[valid_plot_indices], y_pred_line[valid_plot_indices], '--')
 
-def finalize_plot(ax, graph_settings):
-    """凡例などを最終処理する"""
-    if graph_settings["show_legend"]:
+
+def apply_final_axes_and_legend(ax, final_xlim, final_ylim, graph_settings):
+    """最終的な軸範囲を適用し、凡例を表示する"""
+    if final_xlim is not None and final_xlim[0] < final_xlim[1]:
+        ax.set_xlim(final_xlim)
+    if final_ylim is not None and final_ylim[0] < final_ylim[1]:
+        ax.set_ylim(final_ylim)
+
+    if graph_settings.get("show_legend", True):
         handles, labels = ax.get_legend_handles_labels()
         if handles:
             ax.legend(handles, labels, loc='best')
