@@ -2,7 +2,7 @@
 import streamlit as st
 
 # --- アプリのバージョン情報 ---
-APP_VERSION = "v0.1.0"  # アプリを更新するたびにここを変更
+APP_VERSION = "v0.1.1"  # アプリを更新するたびにここを変更
 
 
 def load_release_notes(filepath="release_notes.md"):
