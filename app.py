@@ -32,13 +32,22 @@ if not notification_was_shown:
 
     raw_data_str_from_ui = "" # 初期化
     df_from_data_module = None # 初期化
+    error_message_from_parser = None # 初期化
 
     with data_col:
         # データ入力UI (ui_componentsから)
-        raw_data_str_from_ui, _ = ui.render_data_input_area() # dfはここで使わない
-        # データパース (data_handlerから)
+        raw_data_str_from_ui = ui.render_data_input_area() # raw_data_str のみを受け取る
+        
+        df_from_data_module = None # 初期化
+        error_message_from_parser = None # 初期化
+
         if raw_data_str_from_ui:
-            df_from_data_module = dh.parse_text_data(raw_data_str_from_ui)
+            df_from_data_module, error_message_from_parser = dh.parse_text_data(raw_data_str_from_ui)
+            
+            if error_message_from_parser:
+                st.warning(error_message_from_parser) # data_handlerからのエラーメッセージを表示
+                df_from_data_module = None # エラー時はDataFrameをNoneに
+            
             if df_from_data_module is not None: # パース成功したらプレビュー表示
                 st.write("読み込みデータプレビュー:")
                 st.dataframe(df_from_data_module.head(), height=200)
@@ -101,7 +110,12 @@ if not notification_was_shown:
             
             # --- グラフ描画処理の終了 ---
 
-            # 9. フィッティング結果のテキスト情報を表示 (グラフの下など)
+
+           # 9. ダウンロードボタンを表示 (グラフの下など)
+            ui.render_download_buttons(fig) # これもグラフとは別のUI要素
+
+
+            # 10. フィッティング結果のテキスト情報を表示 (グラフの下など)
             fit_info_placeholder = st.empty() # これはグラフとは別のUI要素
             with fit_info_placeholder.container():
                 if graph_settings["show_fitting"] and fit_results_dict:
@@ -117,10 +131,18 @@ if not notification_was_shown:
                 elif graph_settings["show_fitting"]:
                     st.warning("フィッティングに必要なデータが不足しているか、他の問題が発生しました。")
 
-            # 10. ダウンロードボタンを表示 (グラフの下など)
-            ui.render_download_buttons(fig) # これもグラフとは別のUI要素
+            
+          
+             # 11. LaTeXデータテーブルのエクスポート機能を表示
+            ui.render_data_table_latex_export(df_from_data_module, graph_settings)
 
-        elif df_from_data_module is None and raw_data_str_from_ui: # raw_data_str_from_uiも参照
+
+        elif df_from_data_module is None and raw_data_str_from_ui and not error_message_from_parser:
+            # データはあるがパースに失敗し、かつ明示的なエラーメッセージがない場合 (通常は発生しにくい)
             st.warning("グラフを表示するには、まず有効なデータを入力してください。")
-        else:
-            st.info("左側のテキストエリアにデータを入力すると、ここにグラフが表示されます。")
+        elif df_from_data_module is None and error_message_from_parser:
+            # パースエラーがあった場合は、data_colでメッセージ表示済みなので、plot_colでは特に何もしないか、
+            # 別のメッセージを表示しても良い
+            pass # または st.info("正しいデータを入力するとグラフが表示されます。")
+        elif not raw_data_str_from_ui:
+             st.info("左側のテキストエリアにデータを入力すると、ここにグラフが表示されます。")

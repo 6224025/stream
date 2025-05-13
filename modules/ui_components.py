@@ -53,8 +53,7 @@ def render_sidebar_graph_settings():
     return settings
 
 def render_data_input_area():
-    """メインエリアにデータ入力UIをレンダリングし、(raw_text, DataFrame)を返す"""
-    df = None
+    """メインエリアにデータ入力UIをレンダリングし、raw_textを返す"""
     raw_data_str = "" 
     
     st.subheader("データ入力")
@@ -63,29 +62,8 @@ def render_data_input_area():
         height=300,
         placeholder="例:\n1.0 2.1\n2.0 3.9\n3.0 6.1\n4.0 8.2\n5.0 9.8"
     )
-
-    if raw_data_str:
-        try:
-            df = pd.read_csv(
-                io.StringIO(raw_data_str), sep=r'\s+', header=None,
-                names=['x', 'y'], dtype=float, comment='#'
-            )
-            if df.empty:
-                st.warning("データが読み込めませんでした。入力内容を確認してください。")
-                df = None
-            elif df.shape[1] != 2:
-                st.error(f"データは2列である必要がありますが、{df.shape[1]}列検出されました。")
-                df = None
-            else:
-                st.write("読み込みデータプレビュー:")
-                st.dataframe(df.head(), height=200)
-        except Exception as e:
-            st.error(f"データ読み込みエラー: {e}")
-            df = None
-    else:
-        st.info("テキストエリアにデータを入力してください。")
         
-    return raw_data_str, df
+    return raw_data_str
 
 def render_download_buttons(fig, png_filename="graph.png", svg_filename="graph.svg"):
     """
@@ -132,17 +110,11 @@ def render_fitting_results_display(fit_equation_latex, fit_r_squared_text, fit_s
             
             # st.code を使ってLaTeXソースを表示し、コピーボタンを付ける
             st.caption("近似式のLaTeXソース:")
-            st.code(fit_equation_latex, language="latex")
+            fit_equation_latex_for_code = "$$"+fit_equation_latex.replace("±", "\\pm")+"$$"
+            st.code( fit_equation_latex_for_code, language="latex")
             
-            # コピーボタン (streamlit-extras を使う場合)
-            # try:
-            #     from streamlit_extras.st_copy_to_clipboard import st_copy_to_clipboard
-            #     st_copy_to_clipboard(fit_equation_latex, button_text="LaTeXソースをコピー")
-            # except ImportError:
-            #     st.caption("（streamlit-extrasがインストールされていればコピーボタンが表示されます）")
-
             # コピーボタン (カスタムHTML/JSコンポーネント)
-            button_id_eq = f"copy_eq_btn_{hash(fit_equation_latex)}"
+            button_id_eq = f"copy_eq_btn_{hash(fit_equation_latex_for_code)}"
             components.html(
                 f"""
                 <button id="{button_id_eq}" style="margin-top: 5px; padding: 5px 10px; border-radius: 5px; border: 1px solid #ccc; background-color: #f0f0f0; cursor: pointer;">
@@ -150,7 +122,7 @@ def render_fitting_results_display(fit_equation_latex, fit_r_squared_text, fit_s
                 </button>
                 <script>
                 document.getElementById("{button_id_eq}").onclick = function() {{
-                    navigator.clipboard.writeText(`{fit_equation_latex.replace('`', '\\`')}`) // バッククォートをエスケープ
+                    navigator.clipboard.writeText(`{fit_equation_latex_for_code.replace('`', '\\`')}`) // バッククォートをエスケープ
                     .then(() => {{
                         let btn = document.getElementById("{button_id_eq}");
                         let originalText = btn.innerText;
@@ -167,8 +139,7 @@ def render_fitting_results_display(fit_equation_latex, fit_r_squared_text, fit_s
                 height=45,
             )
 
-        if fit_r_squared_text:
-            st.write(fit_r_squared_text)
+
             
     elif show_fitting_toggle: # フィッティングオプションがONで、成功しなかった場合
         st.warning("選択されたグラフ種類とデータではフィッティングを実行できませんでした。")
@@ -204,22 +175,15 @@ def generate_latex_table(df, x_col_name='x', y_col_name='y', x_header='$x$', y_h
 
 def render_data_table_latex_export(df, graph_settings):
 
-
-    """
-    入力データをLaTeXのtable形式で表示し、コピーできるようにする。
-    """
     if df is None or df.empty:
         return
 
     st.subheader("データテーブル (LaTeX)")
     
-    # ユーザーが軸ラベルとして入力したものをテーブルヘッダーに使う
-    # $で囲まれているものはそのまま使う
+
     x_header_latex = graph_settings.get('x_label', '$x$')
     y_header_latex = graph_settings.get('y_label', '$y$')
-    # 単位部分などを除外したい場合は、ここを調整
-    # 簡単な例: "時間 $t$ [s]" から "$t$" を抽出 (正規表現などが必要になるかも)
-    # ここでは入力された軸ラベルをそのまま使う
+
     
     latex_table_str = generate_latex_table(df, x_header=x_header_latex, y_header=y_header_latex)
     
@@ -231,7 +195,7 @@ def render_data_table_latex_export(df, graph_settings):
         components.html(
             f"""
             <button id="{button_id_table}" style="margin-top: 5px; padding: 5px 10px; border-radius: 5px; border: 1px solid #ccc; background-color: #f0f0f0; cursor: pointer;">
-                LaTeX tableソースをコピー
+                LaTeX ソースをコピー
             </button>
             <script>
             document.getElementById("{button_id_table}").onclick = function() {{
