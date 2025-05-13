@@ -1,14 +1,10 @@
 # modules/data_handler.py
 import pandas as pd
 import io
-# import streamlit as st # st.warning/error はここでは使わない
+
 
 def parse_text_data(raw_data_str):
-    """
-    テキストエリアからの入力文字列をパースし、DataFrameとエラーメッセージを返す。
-    成功時: (DataFrame, None)
-    失敗時: (None, "エラーメッセージ")
-    """
+
     if not raw_data_str.strip(): # 空白のみの入力も考慮
         return None, "データが入力されていません。"
 

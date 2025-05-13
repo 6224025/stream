@@ -54,23 +54,14 @@ def get_latest_release_notes_summary():
             if current_line.strip().startswith("- **v"):
                 break
             
-            # 更新内容の行を識別する (例: インデントされていて '-' や '*' で始まる)
-            # ここでは、単純にインデントされた非空行を抽出してみる
-            # または、特定のマーカー（例: '    - '）で始まる行を抽出する
-            # 今回は、少しインデントされた行であれば取得するようにする
+
             if current_line.strip() and (current_line.startswith("    - ") or current_line.startswith("\t- ")): # インデントとマーカーで判断
                 summary_lines.append(current_line.strip()) # 先頭・末尾の空白を除去して追加
             elif current_line.strip() and not current_line.strip().startswith("- **v"): # 単純にインデントされた行で、次のバージョンヘッダでないもの
-                 # 上記の条件が厳しすぎる場合は、こちらを試す
-                 # ただし、意図しない行も拾う可能性あり。
-                 # 最も単純には、バージョン行の次の行から次のバージョン行の前までを全部拾う
-                 # if current_line.strip(): # 空行以外を拾う
-                 #    summary_lines.append(current_line.strip())
+
                  pass # より具体的な条件を設定するために一旦コメントアウト
 
-        # よりシンプルな抽出ロジック (バージョン行の次の行から、次のバージョン行の前までを全部取得)
-        # このロジックを使う場合は、上記の summary_lines.append の部分をこちらに置き換えるか、
-        # 上記の for ループ全体をこちらで置き換える
+
         if not summary_lines: # 上記の条件で何も取れなかった場合のフォールバック
             temp_summary_lines = []
             for i in range(start_extraction_index, len(lines)):
