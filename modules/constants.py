@@ -85,8 +85,7 @@ def get_latest_release_notes_summary():
 
 
 # --- GitHubリポジトリ情報 ---
-# ご自身のGitHubリポジトリのURLに置き換えてください
-GITHUB_REPO_URL = "https://github.com/6224025/stream" # 例
+GITHUB_REPO_URL = "https://github.com/6224025/stream" 
 
 # --- 初回更新情報表示ロジック ---
 def show_initial_update_notification():
@@ -122,7 +121,7 @@ def show_initial_update_notification():
                 st.session_state.last_seen_version = APP_VERSION
                 st.session_state.update_notification_confirmed_for_current_session = True
                 try:
-                    st.experimental_rerun() # Streamlitのバージョンが0.88.0以降なら利用可能
+                    st.experimental_rerun()
                 except AttributeError:
                     # experimental_rerun がない古いバージョンの場合のフォールバック
                     # この場合、即座には消えず、次のインタラクションで消える
