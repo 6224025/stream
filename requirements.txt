@@ -7,3 +7,5 @@ matplotlib_fontja # これを追加または確認
 openpyxl
 scikit-learn
 streamlit-extras
+streamlit-local-storage
+pyarrow

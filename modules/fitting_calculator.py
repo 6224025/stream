@@ -5,11 +5,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
 
 def calculate_regression_uncertainties(x_numeric, y_numeric, slope, intercept, y_pred):
-    """
-    線形回帰の傾きと切片の不確かさを計算する。
-    ご提示いただいたコードを参考にしています。
-    戻り値: slope_uncertainty, intercept_uncertainty
-    """
+
     n = len(x_numeric)
     if n <= 2: # 自由度が0以下になるため計算不可
         return np.nan, np.nan
