@@ -1,10 +1,13 @@
 # app.py
 import streamlit as st
-
+import sys
+print("--- sys.path ---") # 追加
+for p in sys.path: # 追加
+    print(p) # 追加
+print("--- end sys.path ---") # 追加
 import matplotlib_fontja # インポートするだけで効果あり
-
-import modules.constants as co
 import modules.ui_components as ui
+import modules.constants as co
 import modules.data_handler as dh
 import modules.fitting_calculator as fc
 import modules.plot_generator as pg
