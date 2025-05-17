@@ -2,13 +2,13 @@
 import streamlit as st
 import pandas as pd
 import io
-import streamlit.components.v1 as components 
+import streamlit.components.v1 as components
 
 def render_sidebar_graph_settings():
     """サイドバーにグラフ設定用のUI要素をレンダリングし、設定値を辞書で返す"""
     settings = {}
     st.sidebar.header("グラフ設定")
-    
+
     st.sidebar.subheader("軸ラベル")
     settings['x_label'] = st.sidebar.text_input(
         "X軸ラベル", "X軸", help="物理量を斜体にするには `$` で囲みます。例: `時間 $t$ [s]`"
@@ -16,7 +16,11 @@ def render_sidebar_graph_settings():
     settings['y_label'] = st.sidebar.text_input(
         "Y軸ラベル", "Y軸", help="物理量を斜体にするには `$` で囲みます。例: `電圧 $V$ [V]`"
     )
+
+    # 「凡例設定」というサブヘッダーを設け、データ点と近似直線の凡例をまとめる
+    st.sidebar.subheader("凡例設定")
     settings['data_legend_label'] = st.sidebar.text_input("データ点の凡例ラベル", "測定データ")
+    settings['fit_legend_label'] = st.sidebar.text_input("近似直線の凡例ラベル", "近似曲線") # <--- 追加
 
     st.sidebar.subheader("グラフオプション")
     settings['plot_type'] = st.sidebar.selectbox(
@@ -24,11 +28,10 @@ def render_sidebar_graph_settings():
     )
     settings['show_legend'] = st.sidebar.checkbox("凡例を表示する", True)
     settings['show_fitting'] = st.sidebar.checkbox("最小二乗法でフィッティングを行う")
-    # settings['fit_origin'] = st.sidebar.checkbox("原点を通るフィット (通常グラフのみ)", False) # これはフィッティングの計算方法の選択
 
     st.sidebar.subheader("軸範囲設定")
     settings['force_origin_visible'] = st.sidebar.checkbox("原点(0,0)をグラフに含める", False)
-    
+
     settings['manual_x_axis'] = st.sidebar.checkbox("X軸の範囲を手動で設定する", False)
     if settings['manual_x_axis']:
         col_x_min, col_x_max = st.sidebar.columns(2)
@@ -39,7 +42,6 @@ def render_sidebar_graph_settings():
             if settings['x_axis_min'] >= settings['x_axis_max']:
                 st.sidebar.error("X軸の最大値は最小値より大きくしてください。")
 
-
     settings['manual_y_axis'] = st.sidebar.checkbox("Y軸の範囲を手動で設定する", False)
     if settings['manual_y_axis']:
         col_y_min, col_y_max = st.sidebar.columns(2)
@@ -49,20 +51,21 @@ def render_sidebar_graph_settings():
             settings['y_axis_max'] = st.number_input("Y軸 最大値", value=10.0, format="%.3f", step=0.1)
             if settings['y_axis_min'] >= settings['y_axis_max']:
                 st.sidebar.error("Y軸の最大値は最小値より大きくしてください。")
-    
+
     return settings
 
+# ... (render_data_input_area 以降の関数は変更なし) ...
 def render_data_input_area():
     """メインエリアにデータ入力UIをレンダリングし、raw_textを返す"""
-    raw_data_str = "" 
-    
+    raw_data_str = ""
+
     st.subheader("データ入力")
     raw_data_str = st.text_area(
         "ここにデータを貼り付けてください (スペース区切り、左列: X軸, 右列: Y軸)",
         height=300,
         placeholder="例:\n1.0 2.1\n2.0 3.9\n3.0 6.1\n4.0 8.2\n5.0 9.8"
     )
-        
+
     return raw_data_str
 
 def render_download_buttons(fig, png_filename="graph.png", svg_filename="graph.svg"):
@@ -75,11 +78,11 @@ def render_download_buttons(fig, png_filename="graph.png", svg_filename="graph.s
     img_png = io.BytesIO()
     fig.savefig(img_png, format='png', dpi=300, bbox_inches='tight')
     img_png.seek(0)
-    
+
     img_svg = io.BytesIO()
     fig.savefig(img_svg, format='svg', bbox_inches='tight')
     img_svg.seek(0)
-    
+
     col1, col2 = st.columns(2)
     with col1:
         st.download_button(
@@ -107,13 +110,11 @@ def render_fitting_results_display(fit_equation_latex, fit_r_squared_text, fit_s
         st.write(f"**フィッティング結果:**")
         if fit_equation_latex:
             st.latex(fit_equation_latex) # LaTeXで数式をレンダリングして表示
-            
-            # st.code を使ってLaTeXソースを表示し、コピーボタンを付ける
+
             st.caption("近似式のLaTeXソース:")
             fit_equation_latex_for_code = "$$"+fit_equation_latex.replace("±", "\\pm")+"$$"
             st.code( fit_equation_latex_for_code, language="latex")
-            
-            # コピーボタン (カスタムHTML/JSコンポーネント)
+
             button_id_eq = f"copy_eq_btn_{hash(fit_equation_latex_for_code)}"
             components.html(
                 f"""
@@ -122,7 +123,7 @@ def render_fitting_results_display(fit_equation_latex, fit_r_squared_text, fit_s
                 </button>
                 <script>
                 document.getElementById("{button_id_eq}").onclick = function() {{
-                    navigator.clipboard.writeText(`{fit_equation_latex_for_code.replace('`', '\\`')}`) // バッククォートをエスケープ
+                    navigator.clipboard.writeText(`{fit_equation_latex_for_code.replace('`', '\\`')}`)
                     .then(() => {{
                         let btn = document.getElementById("{button_id_eq}");
                         let originalText = btn.innerText;
@@ -139,12 +140,9 @@ def render_fitting_results_display(fit_equation_latex, fit_r_squared_text, fit_s
                 height=45,
             )
 
-
-            
-    elif show_fitting_toggle: # フィッティングオプションがONで、成功しなかった場合
+    elif show_fitting_toggle:
         st.warning("選択されたグラフ種類とデータではフィッティングを実行できませんでした。")
 
-        # modules/ui_components.py (続き)
 
 def generate_latex_table(df, x_col_name='x', y_col_name='y', x_header='$x$', y_header='$y$'):
     """
@@ -153,24 +151,20 @@ def generate_latex_table(df, x_col_name='x', y_col_name='y', x_header='$x$', y_h
     """
     if df is None or df.empty:
         return ""
-    
-    # LaTeXエスケープが必要な文字を処理 (オプションだが推奨)
-    # ここでは簡単のため省略。必要なら ' চি_ ' を '\\_' にするなど
 
     latex_string = "\\begin{tabular}{|c|c|}\n"
     latex_string += "\\hline\n"
-    latex_string += f"{x_header} & {y_header} \\\\\n" # ヘッダー行
+    latex_string += f"{x_header} & {y_header} \\\\\n"
     latex_string += "\\hline\n"
-    
+
     for index, row in df.iterrows():
-        # 数値のフォーマット (例: 小数点以下3桁)
         x_val_str = f"{row[x_col_name]:.3f}"
         y_val_str = f"{row[y_col_name]:.3f}"
         latex_string += f"{x_val_str} & {y_val_str} \\\\\n"
-    
+
     latex_string += "\\hline\n"
     latex_string += "\\end{tabular}"
-    
+
     return latex_string
 
 def render_data_table_latex_export(df, graph_settings):
@@ -179,18 +173,16 @@ def render_data_table_latex_export(df, graph_settings):
         return
 
     st.subheader("データテーブル (LaTeX)")
-    
 
     x_header_latex = graph_settings.get('x_label', '$x$')
     y_header_latex = graph_settings.get('y_label', '$y$')
 
-    
     latex_table_str = generate_latex_table(df, x_header=x_header_latex, y_header=y_header_latex)
-    
+
     if latex_table_str:
         st.caption("データのLaTeX tableソース:")
         st.code(latex_table_str, language="latex")
-        
+
         button_id_table = f"copy_table_btn_{hash(latex_table_str)}"
         components.html(
             f"""
@@ -215,4 +207,3 @@ def render_data_table_latex_export(df, graph_settings):
             """,
             height=45,
         )
-

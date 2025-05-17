@@ -32,27 +32,24 @@ def determine_final_axis_ranges(ax, graph_settings, x_data_orig=None, y_data_ori
     データ点プロット後のaxオブジェクトと設定に基づき、最終的なX軸・Y軸の範囲を計算して返す。
     この時点では ax.set_xlim/ylim は行わない。
     """
-    # データ点プロット後の現在の(自動調整された)軸範囲を取得
+    # ... (変更なし) ...
     current_xlim_auto = ax.get_xlim()
     current_ylim_auto = ax.get_ylim()
 
     final_xlim_to_return = list(current_xlim_auto)
     final_ylim_to_return = list(current_ylim_auto)
 
-    # 原点表示オプション
     if graph_settings.get('force_origin_visible', False) and \
        ax.get_xscale() != 'log' and ax.get_yscale() != 'log':
         final_xlim_to_return[0] = min(0, final_xlim_to_return[0])
         final_xlim_to_return[1] = max(0, final_xlim_to_return[1])
         final_ylim_to_return[0] = min(0, final_ylim_to_return[0])
         final_ylim_to_return[1] = max(0, final_ylim_to_return[1])
-    
-    # 手動での軸範囲設定 (これが最優先)
+
     if graph_settings.get('manual_x_axis', False):
         x_min_setting = graph_settings.get('x_axis_min')
         x_max_setting = graph_settings.get('x_axis_max')
         if x_min_setting is not None and x_max_setting is not None and x_min_setting < x_max_setting:
-            # 対数軸の場合、0以下は適切に処理
             if ax.get_xscale() == 'log':
                 x_min_final_manual = x_min_setting if x_min_setting > 0 else \
                                      (np.min(x_data_orig[x_data_orig>0]) if x_data_orig is not None and np.any(x_data_orig>0) else np.finfo(float).eps)
@@ -80,7 +77,7 @@ def determine_final_axis_ranges(ax, graph_settings, x_data_orig=None, y_data_ori
                 final_ylim_to_return = [y_min_setting, y_max_setting]
         else:
             print("Manual Y axis range is invalid, using auto/origin-adjusted range.")
-            
+
     return tuple(final_xlim_to_return), tuple(final_ylim_to_return)
 
 
@@ -105,14 +102,12 @@ def plot_fit_line_on_final_axes(ax, final_xlim_to_use, x_data_orig, fit_results,
     else: # 線形スケール
         x_fit_line = np.linspace(final_xlim_to_use[0], final_xlim_to_use[1], 200)
 
-    # Y値の計算 (旧plot_fit_lineのロジック)
     slope_val = fit_results.get("slope_val")
     intercept_val = fit_results.get("intercept_val")
     A_val = fit_results.get("A_val")
     B_val = fit_results.get("B_val")
     y_pred_line = np.zeros_like(x_fit_line, dtype=float)
 
-    # ... (y_pred_line の計算ロジック - 前の回答と同様。エラー時のreturnはpassに変更) ...
     can_plot_fit = True
     if plot_type == "通常":
         if slope_val is not None and intercept_val is not None: y_pred_line = slope_val * x_fit_line + intercept_val
@@ -129,20 +124,24 @@ def plot_fit_line_on_final_axes(ax, final_xlim_to_use, x_data_orig, fit_results,
     else:
         can_plot_fit = False
 
-    if can_plot_fit and np.any(y_pred_line): # 何か計算されていたらプロット
+    if can_plot_fit and np.any(y_pred_line):
         valid_plot_indices = np.isfinite(y_pred_line)
-        if ax.get_yscale() == 'log': # Y軸スケールも現在のものを参照
+        if ax.get_yscale() == 'log':
             valid_plot_indices &= (y_pred_line > 0)
-        
+
         if np.any(valid_plot_indices):
-            if graph_settings["show_legend"]:
-                ax.plot(x_fit_line[valid_plot_indices], y_pred_line[valid_plot_indices], '--', label='近似')
+            # 近似直線の凡例ラベルをgraph_settingsから取得、デフォルトは "近似曲線"
+            fit_legend_label = graph_settings.get("fit_legend_label", "近似曲線") # <--- 変更点
+
+            if graph_settings.get("show_legend", True): # show_legendキーが存在しない場合も考慮
+                ax.plot(x_fit_line[valid_plot_indices], y_pred_line[valid_plot_indices], '--', label=fit_legend_label) # <--- 変更点
             else:
                 ax.plot(x_fit_line[valid_plot_indices], y_pred_line[valid_plot_indices], '--')
 
 
 def apply_final_axes_and_legend(ax, final_xlim, final_ylim, graph_settings):
     """最終的な軸範囲を適用し、凡例を表示する"""
+    # ... (変更なし) ...
     if final_xlim is not None and final_xlim[0] < final_xlim[1]:
         ax.set_xlim(final_xlim)
     if final_ylim is not None and final_ylim[0] < final_ylim[1]:
@@ -150,5 +149,5 @@ def apply_final_axes_and_legend(ax, final_xlim, final_ylim, graph_settings):
 
     if graph_settings.get("show_legend", True):
         handles, labels = ax.get_legend_handles_labels()
-        if handles:
+        if handles: # 凡例エントリが実際に存在する場合のみ表示
             ax.legend(handles, labels, loc='best')
