@@ -152,8 +152,11 @@ def generate_latex_table(df, x_col_name='x', y_col_name='y', x_header='$x$', y_h
     if df is None or df.empty:
         return ""
 
-    latex_string = "\\begin{tabular}{|c|c|}\n"
-    latex_string += "\\hline\n"
+    latex_string = "\\begin{tabular}{cc}\n"
+    latex_string += "\label{tab:table_label} \n"
+    latex_string += "\caption{string} \n"
+    latex_string += "\centering\n"
+    latex_string += "\\hline\hline\n"
     latex_string += f"{x_header} & {y_header} \\\\\n"
     latex_string += "\\hline\n"
 
@@ -162,7 +165,7 @@ def generate_latex_table(df, x_col_name='x', y_col_name='y', x_header='$x$', y_h
         y_val_str = f"{row[y_col_name]:.3f}"
         latex_string += f"{x_val_str} & {y_val_str} \\\\\n"
 
-    latex_string += "\\hline\n"
+    latex_string += "\\hline\hline\n"
     latex_string += "\\end{tabular}"
 
     return latex_string
