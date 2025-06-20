@@ -16,6 +16,16 @@ def render_sidebar_graph_settings():
     settings['y_label'] = st.sidebar.text_input(
         "Y軸ラベル", "Y軸", help="物理量を斜体にするには `$` で囲みます。例: `電圧 $V$ [V]`"
     )
+    
+    # 軸ラベルの文字サイズ設定を追加
+    settings['axis_label_fontsize'] = st.sidebar.slider(
+        "軸ラベルの文字サイズ", 
+        min_value=8, 
+        max_value=20, 
+        value=12, 
+        step=1,
+        help="X軸とY軸のラベルの文字サイズを設定します"
+    )
 
     # 「凡例設定」というサブヘッダーを設け、データ点と近似直線の凡例をまとめる
     st.sidebar.subheader("凡例設定")

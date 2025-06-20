@@ -5,8 +5,12 @@ import numpy as np
 def create_figure_and_axes(graph_settings):
     # ... (変更なし) ...
     fig, ax = plt.subplots(figsize=(10, 7))
-    ax.set_xlabel(graph_settings["x_label"])
-    ax.set_ylabel(graph_settings["y_label"])
+    
+    # 軸ラベルの文字サイズを設定から取得（デフォルトは12）
+    fontsize = graph_settings.get("axis_label_fontsize", 12)
+    
+    ax.set_xlabel(graph_settings["x_label"], fontsize=fontsize)
+    ax.set_ylabel(graph_settings["y_label"], fontsize=fontsize)
     ax.tick_params(direction='in', top=True, right=True, which='both')
     ax.minorticks_on()
     return fig, ax
