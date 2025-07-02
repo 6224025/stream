@@ -1,8 +1,8 @@
-# docker-compose.yml の例
+
 services:
   app:
     build: .
     ports:
       - "8501:8501"
     volumes:
-      - .:/app # ローカルのカレントディレクトリをコンテナの/appにマウント
+      - .:/app 
