@@ -1,19 +1,25 @@
+## Overview
+実験を快適に解析するためのWEBアプリケーションです。
+線形グラフの解析に特化していますが、線形以外のグラフ、片対数、両対数グラフも簡単にプロットできます。
+詳しくは[こちら](release_notes.md)をご参照ください。
 
+
+## How to use 
 
 https://github.com/user-attachments/assets/fb81d5c2-c1bc-4584-99a8-e77e1bd3c8f8
 
 
-### コンテナを起動
+### Run a Docker container
 ```
 docker compose up -d --build
 ```
-### コンテナストップ
+### Stop a Docker container
 ```
 docker stop stream-app-1
 exit
 ```
 
-### リンク
+### DEV LINK
 http://localhost:8501/
 
 
