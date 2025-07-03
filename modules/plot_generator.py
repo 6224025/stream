@@ -12,11 +12,16 @@ jp_font = fm.FontProperties(family='IPAGothic')
 plt.rcParams['mathtext.fontset'] = 'stix'
 plt.rcParams['axes.unicode_minus'] = False
 
+import matplotlib.ticker as ticker
 import numpy as np
 
 def create_figure_and_axes(graph_settings):
     # ... (変更なし) ...
     fig, ax = plt.subplots(figsize=(10, 7))
+
+    # 目盛りのフォーマッターを設定し、不要な桁を削減
+    ax.xaxis.set_major_formatter(ticker.FormatStrFormatter('%g'))
+    ax.yaxis.set_major_formatter(ticker.FormatStrFormatter('%g'))
     
     # 軸ラベルの文字サイズを設定から取得（デフォルトは12）
     fontsize = graph_settings.get("axis_label_fontsize", 12)

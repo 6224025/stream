@@ -30,7 +30,7 @@ def render_sidebar_graph_settings():
     # 「凡例設定」というサブヘッダーを設け、データ点と近似直線の凡例をまとめる
     st.sidebar.subheader("凡例設定")
     settings['data_legend_label'] = st.sidebar.text_input("データ点の凡例ラベル", "測定データ")
-    settings['fit_legend_label'] = st.sidebar.text_input("近似直線の凡例ラベル", "近似曲線") # <--- 追加
+    settings['fit_legend_label'] = st.sidebar.text_input("近似直線の凡例ラベル", "近似曲線")
 
     st.sidebar.subheader("グラフオプション")
     settings['plot_type'] = st.sidebar.selectbox(
@@ -64,7 +64,6 @@ def render_sidebar_graph_settings():
 
     return settings
 
-# ... (render_data_input_area 以降の関数は変更なし) ...
 def render_data_input_area():
     """メインエリアにデータ入力UIをレンダリングし、raw_textを返す"""
     raw_data_str = ""
@@ -127,13 +126,13 @@ def render_fitting_results_display(fit_equation_latex, fit_r_squared_text, fit_s
 
             button_id_eq = f"copy_eq_btn_{hash(fit_equation_latex_for_code)}"
             components.html(
-                f"""
+                f'''
                 <button id="{button_id_eq}" style="margin-top: 5px; padding: 5px 10px; border-radius: 5px; border: 1px solid #ccc; background-color: #f0f0f0; cursor: pointer;">
                     LaTeXソースをコピー
                 </button>
                 <script>
                 document.getElementById("{button_id_eq}").onclick = function() {{
-                    navigator.clipboard.writeText(`{fit_equation_latex_for_code.replace('`', '\\`')}`)
+                    navigator.clipboard.writeText(`{fit_equation_latex_for_code.replace('`', '\`')}`)
                     .then(() => {{
                         let btn = document.getElementById("{button_id_eq}");
                         let originalText = btn.innerText;
@@ -146,13 +145,12 @@ def render_fitting_results_display(fit_equation_latex, fit_r_squared_text, fit_s
                     }});
                 }}
                 </script>
-                """,
+                ''',
                 height=45,
             )
 
     elif show_fitting_toggle:
         st.warning("選択されたグラフ種類とデータではフィッティングを実行できませんでした。")
-
 
 def generate_latex_table(df, x_col_name='x', y_col_name='y', x_header='$x$', y_header='$y$'):
     """
@@ -162,23 +160,32 @@ def generate_latex_table(df, x_col_name='x', y_col_name='y', x_header='$x$', y_h
     if df is None or df.empty:
         return ""
 
-    latex_string = "\\begin{tabular}{cc}\n"
-    latex_string += "\label{tab:table_label} \n"
-    latex_string += "\caption{string} \n"
-    latex_string += "\centering\n"
-    latex_string += "\\hline\hline\n"
-    latex_string += f"{x_header} & {y_header} \\\\\n"
-    latex_string += "\\hline\n"
+    # LaTeXのソースコードを行ごとにリストとして作成
+    # st.code()で正しく改行を表示するため、各行をリストの要素とし、最後に \n で結合する
+    lines = [
+        "\\begin{tabular}{cc}",
+        "\\label{tab:table_label}",
+        "\\caption{string}",
+        "\\centering",
+        "\\hline\\hline",
+        f"{x_header} & {y_header} \\\\", # LaTeXの改行は \\
+        "\\hline"
+    ]
 
+    # データ行を追加
     for index, row in df.iterrows():
-        x_val_str = f"{row[x_col_name]:.3f}"
-        y_val_str = f"{row[y_col_name]:.3f}"
-        latex_string += f"{x_val_str} & {y_val_str} \\\\\n"
+        x_val_str = str(row[x_col_name])
+        y_val_str = str(row[y_col_name])
+        lines.append(f"{x_val_str} & {y_val_str} \\\\")
 
-    latex_string += "\\hline\hline\n"
-    latex_string += "\\end{tabular}"
+    # テーブルの終わり
+    lines.extend([
+        "\\hline\\hline",
+        "\\end{tabular}"
+    ])
 
-    return latex_string
+    # Pythonの改行文字 `\n` で各行を結合して、単一の複数行文字列を返す
+    return "\n".join(lines)
 
 def render_data_table_latex_export(df, graph_settings):
 
@@ -198,13 +205,13 @@ def render_data_table_latex_export(df, graph_settings):
 
         button_id_table = f"copy_table_btn_{hash(latex_table_str)}"
         components.html(
-            f"""
+            f'''
             <button id="{button_id_table}" style="margin-top: 5px; padding: 5px 10px; border-radius: 5px; border: 1px solid #ccc; background-color: #f0f0f0; cursor: pointer;">
                 LaTeX ソースをコピー
             </button>
             <script>
             document.getElementById("{button_id_table}").onclick = function() {{
-                navigator.clipboard.writeText(`{latex_table_str.replace('`', '\\`')}`)
+                navigator.clipboard.writeText(`{latex_table_str.replace('`', '\`').replace('\\', '\\\\')}`)
                 .then(() => {{
                     let btn = document.getElementById("{button_id_table}");
                     let originalText = btn.innerText;
@@ -217,6 +224,6 @@ def render_data_table_latex_export(df, graph_settings):
                 }});
             }}
             </script>
-            """,
+            ''',
             height=45,
         )
