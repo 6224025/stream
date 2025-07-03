@@ -3,7 +3,7 @@ import streamlit as st
 from streamlit_local_storage import LocalStorage  # ライブラリをインポート
 
 # --- アプリのバージョン情報 ---
-APP_VERSION = "v0.1.1"  # アプリを更新するたびにここを変更
+APP_VERSION = "v0.1.2"  # アプリを更新するたびにここを変更
 
 _local_storage_instance = None
 
