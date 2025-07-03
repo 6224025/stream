@@ -5,12 +5,12 @@ print("--- sys.path ---") # 追加
 for p in sys.path: # 追加
     print(p) # 追加
 print("--- end sys.path ---") # 追加
-import matplotlib_fontja # インポートするだけで効果あり
 import modules.ui_components as ui
 import modules.constants as co
 import modules.data_handler as dh
 import modules.fitting_calculator as fc
 import modules.plot_generator as pg
+import matplotlib.font_manager as fm
 
 # --- アプリケーションの基本設定 ---
 st.set_page_config(layout="wide", page_title="簡易グラフ作成アプリ")
@@ -145,3 +145,4 @@ if not notification_was_shown:
             pass # または st.info("正しいデータを入力するとグラフが表示されます。")
         elif not raw_data_str_from_ui:
              st.info("左側のテキストエリアにデータを入力すると、ここにグラフが表示されます。")
+             

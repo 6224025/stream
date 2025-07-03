@@ -1,5 +1,17 @@
 # modules/plot_generator.py
 import matplotlib.pyplot as plt
+import matplotlib.font_manager as fm
+import matplotlib_fontja  # 日本語フォントを有効にするためのインポート
+# --- フォントと共通設定 ---
+
+# 日本語用フォントプロパティ（単体動作確認済みのIPAGothic）
+
+jp_font = fm.FontProperties(family='IPAGothic')
+
+# 数式フォントの設定（英語テキスト描画の要）
+plt.rcParams['mathtext.fontset'] = 'stix'
+plt.rcParams['axes.unicode_minus'] = False
+
 import numpy as np
 
 def create_figure_and_axes(graph_settings):

@@ -2,10 +2,10 @@ streamlit
 pandas
 numpy
 matplotlib
-scipy
-matplotlib_fontja # これを追加または確認
+scipy 
 openpyxl
 scikit-learn
 streamlit-extras
 streamlit-local-storage
 pyarrow
+matplotlib_fontja
