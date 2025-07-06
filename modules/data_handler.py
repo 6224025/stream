@@ -12,16 +12,28 @@ def parse_text_data(raw_data_str):
         return None, None, "データが入力されていません。"
 
     try:
+        # データを行に分割し、各行の列数をチェック
+        lines = raw_data_str.strip().split('\n')
+        num_columns = 0
+        if lines:
+            # コメント行を除外して最初のデータ行の列数を取得
+            for line in lines:
+                if not line.strip().startswith('#'):
+                    num_columns = len(line.split())
+                    break
+        
+        names = ['x', 'y']
+        if num_columns == 3:
+            names.append('y_error')
+
         # まずは dtype を指定せずに、文字列として読み込む
         df_orig = pd.read_csv(
             io.StringIO(raw_data_str), sep=r'\s+', header=None,
-            names=['x', 'y'], comment='#'
+            names=names, comment='#'
         )
         if df_orig.empty:
             return None, None, "データが読み込めませんでした。入力内容を確認してください。"
-        if df_orig.shape[1] != 2:
-            return None, None, f"データは2列である必要がありますが、{df_orig.shape[1]}列検出されました。"
-
+        
         # 計算用の数値データフレームを作成
         # to_numeric を使い、数値に変換できないものは NaN (Not a Number) にする
         df_numeric = df_orig.apply(pd.to_numeric, errors='coerce')

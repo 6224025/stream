@@ -25,10 +25,12 @@ def create_figure_and_axes(graph_settings):
     
     # 軸ラベルの文字サイズを設定から取得（デフォルトは12）
     fontsize = graph_settings.get("axis_label_fontsize", 12)
+    tick_length = graph_settings.get("tick_length", 5)
     
     ax.set_xlabel(graph_settings["x_label"], fontsize=fontsize)
     ax.set_ylabel(graph_settings["y_label"], fontsize=fontsize)
-    ax.tick_params(direction='in', top=True, right=True, which='both')
+    ax.tick_params(direction='in', top=True, right=True, which='major', length=tick_length)
+    ax.tick_params(direction='in', top=True, right=True, which='minor', length=tick_length / 2)
     ax.minorticks_on()
     return fig, ax
 
@@ -42,10 +44,19 @@ def set_plot_scale(ax, plot_type):
 
 def plot_data_points(ax, df, graph_settings):
     # ... (変更なし) ...
-    if graph_settings["show_legend"]:
-        ax.plot(df['x'], df['y'], 'o', label=graph_settings["data_legend_label"], markersize=5)
+    if graph_settings.get("show_error_bars"):
+        y_err = None
+        if 'y_error' in df.columns and df['y_error'].notna().any():
+            y_err = df['y_error']
+        else:
+            y_err = df['y'].std() / np.sqrt(df['y'].count())
+        
+        ax.errorbar(df['x'], df['y'], yerr=y_err, fmt='o', label=graph_settings["data_legend_label"], markersize=5, capsize=3)
     else:
-        ax.plot(df['x'], df['y'], 'o', markersize=5)
+        if graph_settings["show_legend"]:
+            ax.plot(df['x'], df['y'], 'o', label=graph_settings["data_legend_label"], markersize=5)
+        else:
+            ax.plot(df['x'], df['y'], 'o', markersize=5)
 
 
 def determine_final_axis_ranges(ax, graph_settings, x_data_orig=None, y_data_orig=None):
@@ -171,4 +182,5 @@ def apply_final_axes_and_legend(ax, final_xlim, final_ylim, graph_settings):
     if graph_settings.get("show_legend", True):
         handles, labels = ax.get_legend_handles_labels()
         if handles: # 凡例エントリが実際に存在する場合のみ表示
-            ax.legend(handles, labels, loc='best')
+            legend_fontsize = graph_settings.get("legend_fontsize", 10)
+            ax.legend(handles, labels, loc='best', fontsize=legend_fontsize)

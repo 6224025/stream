@@ -26,11 +26,29 @@ def render_sidebar_graph_settings():
         step=1,
         help="X軸とY軸のラベルの文字サイズを設定します"
     )
+    
+    settings['tick_length'] = st.sidebar.slider(
+        "目盛りの長さ",
+        min_value=2,
+        max_value=10,
+        value=5,
+        step=1,
+        help="グラフの目盛りの長さを調整します"
+    )
 
     # 「凡例設定」というサブヘッダーを設け、データ点と近似直線の凡例をまとめる
     st.sidebar.subheader("凡例設定")
     settings['data_legend_label'] = st.sidebar.text_input("データ点の凡例ラベル", "測定データ")
     settings['fit_legend_label'] = st.sidebar.text_input("近似直線の凡例ラベル", "近似曲線")
+    
+    settings['legend_fontsize'] = st.sidebar.slider(
+        "凡例の文字サイズ",
+        min_value=8,
+        max_value=20,
+        value=10,
+        step=1,
+        help="凡例の文字サイズを設定します"
+    )
 
     st.sidebar.subheader("グラフオプション")
     settings['plot_type'] = st.sidebar.selectbox(
@@ -38,6 +56,7 @@ def render_sidebar_graph_settings():
     )
     settings['show_legend'] = st.sidebar.checkbox("凡例を表示する", True)
     settings['show_fitting'] = st.sidebar.checkbox("最小二乗法でフィッティングを行う")
+    settings['show_error_bars'] = st.sidebar.checkbox("エラーバーを表示する", False)
 
     st.sidebar.subheader("軸範囲設定")
     settings['force_origin_visible'] = st.sidebar.checkbox("原点(0,0)をグラフに含める", False)
