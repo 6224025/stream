@@ -81,26 +81,58 @@ if not notification_was_shown:
                     df_plot_data['y'].values
                 )
 
-                # 5. フィッティング計算
-                fit_results_dict = None
+                # 5. フィッティング計算 (1本目)
+                fit_results_dict_1 = None
                 if graph_settings["show_fitting"]:
-                    fit_results_dict = fc.calculate_fitting_parameters_v3(
+                    fit_results_dict_1 = fc.calculate_fitting_parameters_v3(
                         df_plot_data['x'].values,
                         df_plot_data['y'].values,
                         graph_settings["plot_type"]
                     )
-                
-                # 6. 計算された最終X軸範囲に基づいて近似線を描画
+
+                # 5b. フィッティング計算 (2本目、範囲指定)
+                fit_results_dict_2 = None
+                if graph_settings.get("show_fitting_2"):
+                    min_x = graph_settings.get('fit_range_x_min', df_plot_data['x'].min())
+                    max_x = graph_settings.get('fit_range_x_max', df_plot_data['x'].max())
+                    df_fit_range = df_plot_data[(df_plot_data['x'] >= min_x) & (df_plot_data['x'] <= max_x)]
+                    if not df_fit_range.empty:
+                        fit_results_dict_2 = fc.calculate_fitting_parameters_v3(
+                            df_fit_range['x'].values,
+                            df_fit_range['y'].values,
+                            graph_settings["plot_type"]
+                        )
+
+                # 6. 計算された最終X軸範囲に基づいて近似線を描画 (1本目)
                 if graph_settings.get("show_fitting", False) and \
-                   fit_results_dict is not None and not \
-                   fit_results_dict.get("error_message"):
+                   fit_results_dict_1 is not None and not \
+                   fit_results_dict_1.get("error_message"):
                     pg.plot_fit_line_on_final_axes(
                         ax,
                         final_xlim_calculated, 
                         df_plot_data['x'].values, 
-                        fit_results_dict, 
+                        fit_results_dict_1, 
                         graph_settings["plot_type"], 
-                        graph_settings
+                        graph_settings,
+                        legend_label=graph_settings.get("fit_legend_label", "近似曲線"),
+                        line_style='--',
+                        color='red'
+                    )
+
+                # 6b. 計算された最終X軸範囲に基づいて近似線を描画 (2本目)
+                if graph_settings.get("show_fitting_2", False) and \
+                   fit_results_dict_2 is not None and not \
+                   fit_results_dict_2.get("error_message"):
+                    pg.plot_fit_line_on_final_axes(
+                        ax,
+                        final_xlim_calculated, 
+                        df_plot_data['x'].values, 
+                        fit_results_dict_2, 
+                        graph_settings["plot_type"], 
+                        graph_settings,
+                        legend_label=graph_settings.get("fit_legend_label_2", "範囲フィット"),
+                        line_style=':',
+                        color='green'
                     )
 
                 # 7. 最終的な軸範囲をグラフに適用し、凡例を表示
@@ -122,18 +154,35 @@ if not notification_was_shown:
                 # 10. フィッティング結果のテキスト情報を表示
                 fit_info_placeholder = st.empty()
                 with fit_info_placeholder.container():
-                    if graph_settings["show_fitting"] and fit_results_dict:
-                        if fit_results_dict.get("error_message"):
-                            st.warning(fit_results_dict["error_message"])
+                    # 1本目の結果表示
+                    if graph_settings["show_fitting"] and fit_results_dict_1:
+                        if fit_results_dict_1.get("error_message"):
+                            st.warning(f"1本目のフィッティングエラー: {fit_results_dict_1['error_message']}")
                         else:
+                            st.write(f"**フィッティング結果 ({graph_settings.get('fit_legend_label')})**")
                             ui.render_fitting_results_display(
-                                fit_results_dict.get("equation_latex"),
-                                f"$R^2 = {fit_results_dict.get('r_squared'):.4f}$" if fit_results_dict.get('r_squared') is not None else "",
-                                fit_results_dict.get("slope_val") is not None, 
+                                fit_results_dict_1.get("equation_latex"),
+                                f"$R^2 = {fit_results_dict_1.get('r_squared'):.4f}$" if fit_results_dict_1.get('r_squared') is not None else "",
+                                fit_results_dict_1.get("slope_val") is not None, 
                                 graph_settings["show_fitting"]
                             )
                     elif graph_settings["show_fitting"]:
-                        st.warning("フィッティングに必要なデータが不足しているか、他の問題が発生しました。")
+                        st.warning("1本目のフィッティングに必要なデータが不足しているか、他の問題が発生しました。")
+
+                    # 2本目の結果表示
+                    if graph_settings["show_fitting_2"] and fit_results_dict_2:
+                        if fit_results_dict_2.get("error_message"):
+                            st.warning(f"2本目のフィッティングエラー: {fit_results_dict_2['error_message']}")
+                        else:
+                            st.write(f"**フィッティング結果 ({graph_settings.get('fit_legend_label_2')})**")
+                            ui.render_fitting_results_display(
+                                fit_results_dict_2.get("equation_latex"),
+                                f"$R^2 = {fit_results_dict_2.get('r_squared'):.4f}$" if fit_results_dict_2.get('r_squared') is not None else "",
+                                fit_results_dict_2.get("slope_val") is not None, 
+                                graph_settings["show_fitting_2"]
+                            )
+                    elif graph_settings["show_fitting_2"]:
+                        st.warning("2本目のフィッティングに必要なデータが不足しているか、他の問題が発生しました。")
 
                 # 11. LaTeXデータテーブルのエクスポート機能を表示 (元のデータを渡す)
                 ui.render_data_table_latex_export(df_orig, graph_settings)

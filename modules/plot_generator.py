@@ -24,13 +24,14 @@ def create_figure_and_axes(graph_settings):
     ax.yaxis.set_major_formatter(ticker.FormatStrFormatter('%g'))
     
     # 軸ラベルの文字サイズを設定から取得（デフォルトは12）
-    fontsize = graph_settings.get("axis_label_fontsize", 12)
+    fontsize = graph_settings.get("axis_label_fontsize", 14)
     tick_length = graph_settings.get("tick_length", 5)
     
     ax.set_xlabel(graph_settings["x_label"], fontsize=fontsize)
     ax.set_ylabel(graph_settings["y_label"], fontsize=fontsize)
     ax.tick_params(direction='in', top=True, right=True, which='major', length=tick_length)
     ax.tick_params(direction='in', top=True, right=True, which='minor', length=tick_length / 2)
+    ax.tick_params(labelsize=12) # 目盛りの文字サイズを設定
     ax.minorticks_on()
     return fig, ax
 
@@ -113,9 +114,10 @@ def determine_final_axis_ranges(ax, graph_settings, x_data_orig=None, y_data_ori
     return tuple(final_xlim_to_return), tuple(final_ylim_to_return)
 
 
-def plot_fit_line_on_final_axes(ax, final_xlim_to_use, x_data_orig, fit_results, plot_type, graph_settings):
+def plot_fit_line_on_final_axes(ax, final_xlim_to_use, x_data_orig, fit_results, plot_type, graph_settings, legend_label, line_style, color):
     """
     指定された最終X軸範囲 (final_xlim_to_use) に基づいて近似直線/曲線を描画する。
+    凡例ラベル、線のスタイル、色を引数で指定できる。
     """
     if fit_results is None or fit_results.get("slope_val") is None or fit_results.get("error_message"):
         return
@@ -162,13 +164,10 @@ def plot_fit_line_on_final_axes(ax, final_xlim_to_use, x_data_orig, fit_results,
             valid_plot_indices &= (y_pred_line > 0)
 
         if np.any(valid_plot_indices):
-            # 近似直線の凡例ラベルをgraph_settingsから取得、デフォルトは "近似曲線"
-            fit_legend_label = graph_settings.get("fit_legend_label", "近似曲線") # <--- 変更点
-
-            if graph_settings.get("show_legend", True): # show_legendキーが存在しない場合も考慮
-                ax.plot(x_fit_line[valid_plot_indices], y_pred_line[valid_plot_indices], '--', label=fit_legend_label) # <--- 変更点
+            if graph_settings.get("show_legend", True):
+                ax.plot(x_fit_line[valid_plot_indices], y_pred_line[valid_plot_indices], linestyle=line_style, color=color, label=legend_label)
             else:
-                ax.plot(x_fit_line[valid_plot_indices], y_pred_line[valid_plot_indices], '--')
+                ax.plot(x_fit_line[valid_plot_indices], y_pred_line[valid_plot_indices], linestyle=line_style, color=color)
 
 
 def apply_final_axes_and_legend(ax, final_xlim, final_ylim, graph_settings):
@@ -182,5 +181,5 @@ def apply_final_axes_and_legend(ax, final_xlim, final_ylim, graph_settings):
     if graph_settings.get("show_legend", True):
         handles, labels = ax.get_legend_handles_labels()
         if handles: # 凡例エントリが実際に存在する場合のみ表示
-            legend_fontsize = graph_settings.get("legend_fontsize", 10)
+            legend_fontsize = graph_settings.get("legend_fontsize", 20)
             ax.legend(handles, labels, loc='best', fontsize=legend_fontsize)

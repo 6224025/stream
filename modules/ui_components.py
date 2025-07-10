@@ -11,11 +11,11 @@ def render_sidebar_graph_settings():
 
     st.sidebar.subheader("軸ラベル")
     settings['x_label'] = st.sidebar.text_input(
-        "X軸ラベル", "X軸", help="物理量を斜体にするには `$` で囲みます。例: `時間 $t$ [s]`"
-    )
+    "X軸ラベル", "X軸", help="物理量を斜体にするには `$` で囲みます。例: `時間 $t$ [s]`"
+)
     settings['y_label'] = st.sidebar.text_input(
-        "Y軸ラベル", "Y軸", help="物理量を斜体にするには `$` で囲みます。例: `電圧 $V$ [V]`"
-    )
+    "Y軸ラベル", "Y軸", help="物理量を斜体にするには `$` で囲みます。例: `電圧 $V$ [V]`"
+)
     
     # 軸ラベルの文字サイズ設定を追加
     settings['axis_label_fontsize'] = st.sidebar.slider(
@@ -29,8 +29,8 @@ def render_sidebar_graph_settings():
     
     settings['tick_length'] = st.sidebar.slider(
         "目盛りの長さ",
-        min_value=2,
-        max_value=10,
+        min_value=5,
+        max_value=15,
         value=5,
         step=1,
         help="グラフの目盛りの長さを調整します"
@@ -43,9 +43,9 @@ def render_sidebar_graph_settings():
     
     settings['legend_fontsize'] = st.sidebar.slider(
         "凡例の文字サイズ",
-        min_value=8,
+        min_value=15,
         max_value=20,
-        value=10,
+        value=15,
         step=1,
         help="凡例の文字サイズを設定します"
     )
@@ -58,6 +58,20 @@ def render_sidebar_graph_settings():
     settings['show_fitting'] = st.sidebar.checkbox("最小二乗法でフィッティングを行う")
     settings['show_error_bars'] = st.sidebar.checkbox("エラーバーを表示する", False)
 
+    # --- 2本目の近似曲線 ---
+    st.sidebar.markdown("---")
+    settings['show_fitting_2'] = st.sidebar.checkbox("範囲を指定して2本目の近似線を追加")
+    if settings['show_fitting_2']:
+        settings['fit_legend_label_2'] = st.sidebar.text_input("2本目の近似線の凡例", "範囲フィット")
+        col_fit2_min, col_fit2_max = st.sidebar.columns(2)
+        with col_fit2_min:
+            settings['fit_range_x_min'] = st.number_input("X軸の最小値", value=0.0, format="%.3f", step=0.1, key="fit_range_min")
+        with col_fit2_max:
+            settings['fit_range_x_max'] = st.number_input("X軸の最大値", value=10.0, format="%.3f", step=0.1, key="fit_range_max")
+        if 'fit_range_x_min' in settings and 'fit_range_x_max' in settings and settings['fit_range_x_min'] >= settings['fit_range_x_max']:
+            st.sidebar.error("X軸の最大値は最小値より大きくしてください。")
+
+
     st.sidebar.subheader("軸範囲設定")
     settings['force_origin_visible'] = st.sidebar.checkbox("原点(0,0)をグラフに含める", False)
 
@@ -65,9 +79,9 @@ def render_sidebar_graph_settings():
     if settings['manual_x_axis']:
         col_x_min, col_x_max = st.sidebar.columns(2)
         with col_x_min:
-            settings['x_axis_min'] = st.number_input("X軸 最小値", value=0.0, format="%.3f", step=0.1)
+            settings['x_axis_min'] = st.number_input("X軸 最小値", value=0.0, format="%.3f", step=0.1, key="manual_x_min")
         with col_x_max:
-            settings['x_axis_max'] = st.number_input("X軸 最大値", value=10.0, format="%.3f", step=0.1)
+            settings['x_axis_max'] = st.number_input("X軸 最大値", value=10.0, format="%.3f", step=0.1, key="manual_x_max")
             if settings['x_axis_min'] >= settings['x_axis_max']:
                 st.sidebar.error("X軸の最大値は最小値より大きくしてください。")
 
@@ -75,10 +89,10 @@ def render_sidebar_graph_settings():
     if settings['manual_y_axis']:
         col_y_min, col_y_max = st.sidebar.columns(2)
         with col_y_min:
-            settings['y_axis_min'] = st.number_input("Y軸 最小値", value=0.0, format="%.3f", step=0.1)
+            settings['y_axis_min'] = st.number_input("Y軸 最小値", value=0.0, format="%.3f", step=0.1, key="manual_y_min")
         with col_y_max:
-            settings['y_axis_max'] = st.number_input("Y軸 最大値", value=10.0, format="%.3f", step=0.1)
-            if settings['y_axis_min'] >= settings['y_axis_max']:
+            settings['y_axis_max'] = st.number_input("Y軸 最大値", value=10.0, format="%.3f", step=0.1, key="manual_y_max")
+            if 'y_axis_min' in settings and 'y_axis_max' in settings and settings['y_axis_min'] >= settings['y_axis_max']:
                 st.sidebar.error("Y軸の最大値は最小値より大きくしてください。")
 
     return settings
