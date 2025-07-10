@@ -17,15 +17,7 @@ def render_sidebar_graph_settings():
     "Y軸ラベル", "Y軸", help="物理量を斜体にするには `$` で囲みます。例: `電圧 $V$ [V]`"
 )
     
-    # 軸ラベルの文字サイズ設定を追加
-    settings['axis_label_fontsize'] = st.sidebar.slider(
-        "軸ラベルの文字サイズ", 
-        min_value=8, 
-        max_value=20, 
-        value=12, 
-        step=1,
-        help="X軸とY軸のラベルの文字サイズを設定します"
-    )
+    
     
     settings['tick_length'] = st.sidebar.slider(
         "目盛りの長さ",
@@ -73,9 +65,16 @@ def render_sidebar_graph_settings():
 
 
     st.sidebar.subheader("軸範囲設定")
-    settings['force_origin_visible'] = st.sidebar.checkbox("原点(0,0)をグラフに含める", False)
+    settings['axis_range_mode'] = st.sidebar.selectbox(
+        "軸範囲の指定方法",
+        ["自動", "原点を含める", "手動"],
+        index=0,
+        help="グラフの表示範囲を設定します。"
+    )
 
-    settings['manual_x_axis'] = st.sidebar.checkbox("X軸の範囲を手動で設定する", False)
+    settings['force_origin_visible'] = (settings['axis_range_mode'] == "原点を含める")
+
+    settings['manual_x_axis'] = (settings['axis_range_mode'] == "手動")
     if settings['manual_x_axis']:
         col_x_min, col_x_max = st.sidebar.columns(2)
         with col_x_min:
@@ -85,7 +84,7 @@ def render_sidebar_graph_settings():
             if settings['x_axis_min'] >= settings['x_axis_max']:
                 st.sidebar.error("X軸の最大値は最小値より大きくしてください。")
 
-    settings['manual_y_axis'] = st.sidebar.checkbox("Y軸の範囲を手動で設定する", False)
+    settings['manual_y_axis'] = (settings['axis_range_mode'] == "手動")
     if settings['manual_y_axis']:
         col_y_min, col_y_max = st.sidebar.columns(2)
         with col_y_min:

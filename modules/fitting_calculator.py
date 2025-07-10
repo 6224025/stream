@@ -10,7 +10,7 @@ def calculate_regression_uncertainties(x_numeric, y_numeric, slope, intercept, y
     if n <= 2: # 自由度が0以下になるため計算不可
         return np.nan, np.nan
 
-    t_value = stats.t.ppf(0.975, df=n - 2)  # 95%信頼区間のt値
+    t_value = 1.0  # 包含係数を1に設定
     residuals = y_numeric - y_pred
     # 標準誤差 (RMSE / sqrt(n-2) ではない。残差平方和 / (n-2) の平方根)
     std_error_of_residuals = np.sqrt(np.sum(residuals**2) / (n - 2))

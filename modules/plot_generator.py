@@ -23,15 +23,15 @@ def create_figure_and_axes(graph_settings):
     ax.xaxis.set_major_formatter(ticker.FormatStrFormatter('%g'))
     ax.yaxis.set_major_formatter(ticker.FormatStrFormatter('%g'))
     
-    # 軸ラベルの文字サイズを設定から取得（デフォルトは12）
-    fontsize = graph_settings.get("axis_label_fontsize", 14)
+    # 軸ラベルの文字サイズを20に固定
+    fontsize = 20
     tick_length = graph_settings.get("tick_length", 5)
     
     ax.set_xlabel(graph_settings["x_label"], fontsize=fontsize)
     ax.set_ylabel(graph_settings["y_label"], fontsize=fontsize)
     ax.tick_params(direction='in', top=True, right=True, which='major', length=tick_length)
     ax.tick_params(direction='in', top=True, right=True, which='minor', length=tick_length / 2)
-    ax.tick_params(labelsize=12) # 目盛りの文字サイズを設定
+    ax.tick_params(labelsize=16) # 目盛りの文字サイズを設定
     ax.minorticks_on()
     return fig, ax
 
@@ -71,6 +71,18 @@ def determine_final_axis_ranges(ax, graph_settings, x_data_orig=None, y_data_ori
 
     final_xlim_to_return = list(current_xlim_auto)
     final_ylim_to_return = list(current_ylim_auto)
+
+    # データに基づいて範囲を計算
+    if x_data_orig is not None and len(x_data_orig) > 0:
+        x_min, x_max = np.min(x_data_orig), np.max(x_data_orig)
+        x_range = x_max - x_min
+        final_xlim_to_return = [x_min - x_range * 0.1, x_max + x_range * 0.1]
+
+    if y_data_orig is not None and len(y_data_orig) > 0:
+        y_min, y_max = np.min(y_data_orig), np.max(y_data_orig)
+        y_range = y_max - y_min
+        final_ylim_to_return = [y_min - y_range * 0.1, y_max + y_range * 0.1]
+
 
     if graph_settings.get('force_origin_visible', False) and \
        ax.get_xscale() != 'log' and ax.get_yscale() != 'log':
