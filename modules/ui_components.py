@@ -11,10 +11,10 @@ def render_sidebar_graph_settings():
 
     st.sidebar.subheader("軸ラベル")
     settings['x_label'] = st.sidebar.text_input(
-    "X軸ラベル", "X軸", help="物理量を斜体にするには `$` で囲みます。例: `時間 $t$ [s]`"
+    "X軸ラベル", "X軸", help="$$でTexの数式が使用できます。例: `時間 $t$ [s]`"
 )
     settings['y_label'] = st.sidebar.text_input(
-    "Y軸ラベル", "Y軸", help="物理量を斜体にするには `$` で囲みます。例: `電圧 $V$ [V]`"
+    "Y軸ラベル", "Y軸", help="$$でTexの数式が使用できます。例: `電圧 $V$ [V]`"
 )
     
     
@@ -30,8 +30,7 @@ def render_sidebar_graph_settings():
 
     # 「凡例設定」というサブヘッダーを設け、データ点と近似直線の凡例をまとめる
     st.sidebar.subheader("凡例設定")
-    settings['data_legend_label'] = st.sidebar.text_input("データ点の凡例ラベル", "測定データ")
-    settings['fit_legend_label'] = st.sidebar.text_input("近似直線の凡例ラベル", "近似曲線")
+    settings['data_legend_label'] = st.sidebar.text_input("データ点の凡例ラベル", "測定値")
     
     settings['legend_fontsize'] = st.sidebar.slider(
         "凡例の文字サイズ",

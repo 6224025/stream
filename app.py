@@ -107,6 +107,7 @@ if not notification_was_shown:
                 if graph_settings.get("show_fitting", False) and \
                    fit_results_dict_1 is not None and not \
                    fit_results_dict_1.get("error_message"):
+                    legend_label_1 = fc.get_fit_equation_string(fit_results_dict_1, graph_settings["plot_type"])
                     pg.plot_fit_line_on_final_axes(
                         ax,
                         final_xlim_calculated, 
@@ -114,7 +115,7 @@ if not notification_was_shown:
                         fit_results_dict_1, 
                         graph_settings["plot_type"], 
                         graph_settings,
-                        legend_label=graph_settings.get("fit_legend_label", "近似曲線"),
+                        legend_label=legend_label_1,
                         line_style='--',
                         color='red'
                     )
@@ -123,6 +124,7 @@ if not notification_was_shown:
                 if graph_settings.get("show_fitting_2", False) and \
                    fit_results_dict_2 is not None and not \
                    fit_results_dict_2.get("error_message"):
+                    legend_label_2 = fc.get_fit_equation_string(fit_results_dict_2, graph_settings["plot_type"])
                     pg.plot_fit_line_on_final_axes(
                         ax,
                         final_xlim_calculated, 
@@ -130,7 +132,7 @@ if not notification_was_shown:
                         fit_results_dict_2, 
                         graph_settings["plot_type"], 
                         graph_settings,
-                        legend_label=graph_settings.get("fit_legend_label_2", "範囲フィット"),
+                        legend_label=legend_label_2,
                         line_style=':',
                         color='green'
                     )

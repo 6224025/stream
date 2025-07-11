@@ -1,3 +1,4 @@
+
 # modules/fitting_calculator.py
 import numpy as np
 from scipy import stats
@@ -199,3 +200,31 @@ def calculate_fitting_parameters_v3(x_data_orig, y_data_orig, plot_type): # fit_
         })
         
     return fit_results
+
+def get_fit_equation_string(fit_results, plot_type):
+    """
+    近似式の凡例用の文字列を生成する。
+    """
+    if not fit_results or fit_results.get("error_message"):
+        return "近似曲線" # デフォルトの凡例
+
+    A_val = fit_results.get("A_val")
+    B_val = fit_results.get("B_val")
+
+    if A_val is None or B_val is None:
+        return "近似曲線"
+
+    if plot_type == "通常":
+        # y = Bx + A
+        return f"$y = {B_val:.3f}x {A_val:+.3f}$"
+    elif plot_type == "片対数 (Y軸対数)":
+        # y = A * exp(Bx)
+        return f"$y = {A_val:.2e} e^{{{B_val:.2f}x}}$"
+    elif plot_type == "片対数 (X軸対数)":
+        # y = B * ln(x) + A
+        return f"$y = {B_val:.2f} \\ln(x) {A_val:+.2f}$"
+    elif plot_type == "両対数":
+        # y = A * x^B
+        return f"$y = {A_val:.2e} x^{{{B_val:.2f}}}$"
+    
+    return "近似曲線"
