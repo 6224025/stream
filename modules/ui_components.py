@@ -28,7 +28,6 @@ def render_sidebar_graph_settings():
         help="グラフの目盛りの長さを調整します"
     )
 
-    # 「凡例設定」というサブヘッダーを設け、データ点と近似直線の凡例をまとめる
     st.sidebar.subheader("凡例設定")
     settings['data_legend_label'] = st.sidebar.text_input("データ点の凡例ラベル", "測定値")
     
