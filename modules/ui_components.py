@@ -4,40 +4,21 @@ import pandas as pd
 import io
 import streamlit.components.v1 as components
 
-def render_sidebar_graph_settings():
-    """サイドバーにグラフ設定用のUI要素をレンダリングし、設定値を辞書で返す"""
+def render_sidebar_main_settings():
+    """サイドバーの基本的なグラフ設定UI（凡例を除く）をレンダリングする"""
     settings = {}
     st.sidebar.header("グラフ設定")
 
     st.sidebar.subheader("軸ラベル")
     settings['x_label'] = st.sidebar.text_input(
-    "X軸ラベル", "X軸", help="$$でTexの数式が使用できます。例: `時間 $t$ [s]`"
-)
+        "X軸ラベル", "X軸", help="$で囲むとTex数式になります。例: `時間 $t$ [s]`"
+    )
     settings['y_label'] = st.sidebar.text_input(
-    "Y軸ラベル", "Y軸", help="$$でTexの数式が使用できます。例: `電圧 $V$ [V]`"
-)
-    
-    
+        "Y軸ラベル", "Y軸", help="$で囲むとTex数式になります。例: `電圧 $V$ [V]`"
+    )
     
     settings['tick_length'] = st.sidebar.slider(
-        "目盛りの長さ",
-        min_value=5,
-        max_value=15,
-        value=5,
-        step=1,
-        help="グラフの目盛りの長さを調整します"
-    )
-
-    st.sidebar.subheader("凡例設定")
-    settings['data_legend_label'] = st.sidebar.text_input("データ点の凡例ラベル", "測定値")
-    
-    settings['legend_fontsize'] = st.sidebar.slider(
-        "凡例の文字サイズ",
-        min_value=15,
-        max_value=20,
-        value=15,
-        step=1,
-        help="凡例の文字サイズを設定します"
+        "目盛りの長さ", 5, 15, 5, 1, help="グラフの主目盛りの長さを調整します"
     )
 
     st.sidebar.subheader("グラフオプション")
@@ -48,30 +29,25 @@ def render_sidebar_graph_settings():
     settings['show_fitting'] = st.sidebar.checkbox("最小二乗法でフィッティングを行う")
     settings['show_error_bars'] = st.sidebar.checkbox("エラーバーを表示する", False)
 
-    # --- 2本目の近似曲線 ---
+    # 2本目の近似曲線
     st.sidebar.markdown("---")
     settings['show_fitting_2'] = st.sidebar.checkbox("範囲を指定して2本目の近似線を追加")
     if settings['show_fitting_2']:
-        settings['fit_legend_label_2'] = st.sidebar.text_input("2本目の近似線の凡例", "範囲フィット")
+        # 2本目の凡例はここで直接取得
+        settings['fit_legend_label_2'] = st.sidebar.text_input("2本目の近似線の凡例", "範囲フィット", key="fit_legend_2")
         col_fit2_min, col_fit2_max = st.sidebar.columns(2)
         with col_fit2_min:
             settings['fit_range_x_min'] = st.number_input("X軸の最小値", value=0.0, format="%.3f", step=0.1, key="fit_range_min")
         with col_fit2_max:
             settings['fit_range_x_max'] = st.number_input("X軸の最大値", value=10.0, format="%.3f", step=0.1, key="fit_range_max")
-        if 'fit_range_x_min' in settings and 'fit_range_x_max' in settings and settings['fit_range_x_min'] >= settings['fit_range_x_max']:
+        if settings.get('fit_range_x_min', 0.0) >= settings.get('fit_range_x_max', 10.0):
             st.sidebar.error("X軸の最大値は最小値より大きくしてください。")
-
 
     st.sidebar.subheader("軸範囲設定")
     settings['axis_range_mode'] = st.sidebar.selectbox(
-        "軸範囲の指定方法",
-        ["自動", "原点を含める", "手動"],
-        index=0,
-        help="グラフの表示範囲を設定します。"
+        "軸範囲の指定方法", ["自動", "原点を含める", "手動"], index=0, help="グラフの表示範囲を設定します。"
     )
-
     settings['force_origin_visible'] = (settings['axis_range_mode'] == "原点を含める")
-
     settings['manual_x_axis'] = (settings['axis_range_mode'] == "手動")
     if settings['manual_x_axis']:
         col_x_min, col_x_max = st.sidebar.columns(2)
@@ -79,20 +55,46 @@ def render_sidebar_graph_settings():
             settings['x_axis_min'] = st.number_input("X軸 最小値", value=0.0, format="%.3f", step=0.1, key="manual_x_min")
         with col_x_max:
             settings['x_axis_max'] = st.number_input("X軸 最大値", value=10.0, format="%.3f", step=0.1, key="manual_x_max")
-            if settings['x_axis_min'] >= settings['x_axis_max']:
-                st.sidebar.error("X軸の最大値は最小値より大きくしてください。")
+        if settings.get('x_axis_min', 0.0) >= settings.get('x_axis_max', 10.0):
+            st.sidebar.error("X軸の最大値は最小値より大きくしてください。")
 
-    settings['manual_y_axis'] = (settings['axis_range_mode'] == "手動")
+    settings['manual_y_axis'] = (settings['axis_range_mode'] == "手動") # Y軸も手動設定を共有
     if settings['manual_y_axis']:
         col_y_min, col_y_max = st.sidebar.columns(2)
         with col_y_min:
             settings['y_axis_min'] = st.number_input("Y軸 最小値", value=0.0, format="%.3f", step=0.1, key="manual_y_min")
         with col_y_max:
             settings['y_axis_max'] = st.number_input("Y軸 最大値", value=10.0, format="%.3f", step=0.1, key="manual_y_max")
-            if 'y_axis_min' in settings and 'y_axis_max' in settings and settings['y_axis_min'] >= settings['y_axis_max']:
-                st.sidebar.error("Y軸の最大値は最小値より大きくしてください。")
+        if settings.get('y_axis_min', 0.0) >= settings.get('y_axis_max', 10.0):
+            st.sidebar.error("Y軸の最大値は最小値より大きくしてください。")
 
     return settings
+
+def render_sidebar_legend_settings(graph_settings, fit_results_1=None):
+    """サイドバーの凡例設定UIをレンダリングする"""
+    if not graph_settings.get('show_legend', True):
+        return {}
+
+    legend_settings = {}
+    st.sidebar.subheader("凡例設定")
+    
+    legend_settings['data_legend_label'] = st.sidebar.text_input(
+        "データ点の凡例", "測定値", key="data_legend_label"
+    )
+
+    if graph_settings.get('show_fitting'):
+        default_fit_legend = "近似曲線"
+        if fit_results_1 and fit_results_1.get("equation_latex"):
+            default_fit_legend = fit_results_1.get("equation_latex")
+        
+        legend_settings['fit_legend_label'] = st.sidebar.text_input(
+            "近似曲線の凡例", value=default_fit_legend, key="$"+"fit_legend_label_1"+"$"
+        )
+
+    legend_settings['legend_fontsize'] = st.sidebar.slider(
+        "凡例の文字サイズ", 15, 20, 15, 1, help="凡例の文字サイズを設定します"
+    )
+    return legend_settings
 
 def render_data_input_area():
     """メインエリアにデータ入力UIをレンダリングし、raw_textを返す"""
@@ -148,10 +150,8 @@ def render_fitting_results_display(fit_equation_latex, fit_r_squared_text, fit_s
     if fit_successful:
         st.write(f"**フィッティング結果:**")
         if fit_equation_latex:
-            st.latex(fit_equation_latex) # LaTeXで数式をレンダリングして表示
-
             st.caption("近似式のLaTeXソース:")
-            fit_equation_latex_for_code = "$$"+fit_equation_latex.replace("±", "\\pm")+"$$"
+            fit_equation_latex_for_code = "$"+fit_equation_latex.replace("±", "\\pm")+"$"
             st.code( fit_equation_latex_for_code, language="latex")
 
             button_id_eq = f"copy_eq_btn_{hash(fit_equation_latex_for_code)}"

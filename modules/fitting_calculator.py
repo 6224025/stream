@@ -151,15 +151,15 @@ def calculate_fitting_parameters_v3(x_data_orig, y_data_orig, plot_type): # fit_
     })
     
     # ±記号の後の誤差は、値が存在する場合のみ表示 (有効数字は仮)
-    s_e_str = f" ± {s_err:.3f}" if not np.isnan(s_err) else ""
-    i_e_str = f" ± {i_err:.3f}" if not np.isnan(i_err) else ""
+    s_e_str = f" \pm {s_err:.3f}" if not np.isnan(s_err) else ""
+    i_e_str = f" \pm {i_err:.3f}" if not np.isnan(i_err) else ""
 
 
     if plot_type == "通常":
         fit_results.update({
             "B_val": s_val, "B_err": s_err, "A_val": i_val, "A_err": i_err,
             "equation_text": f"y = ({s_val:.3f}{s_e_str})x + ({i_val:.3f}{i_e_str})",
-            "equation_latex": rf"y = ({s_val:.3f}{s_e_str})x + ({i_val:.3f}{i_e_str})"
+            "equation_latex": rf"$y = ({s_val:.3f}{s_e_str})x + ({i_val:.3f}{i_e_str})$"
         })
     elif plot_type == "片対数 (Y軸対数)": # intercept = ln(A), slope = B
         A_v = np.exp(i_val)
@@ -167,36 +167,36 @@ def calculate_fitting_parameters_v3(x_data_orig, y_data_orig, plot_type): # fit_
         A_e = A_v * i_err if not np.isnan(i_err) else np.nan
         B_v, B_e = s_val, s_err
         
-        A_e_str = f" ± {A_e:.1e}" if not np.isnan(A_e) else ""
-        B_e_str = f" ± {B_e:.2f}" if not np.isnan(B_e) else ""
+        A_e_str = f" \pm {A_e:.1e}" if not np.isnan(A_e) else ""
+        B_e_str = f" \pm {B_e:.2f}" if not np.isnan(B_e) else ""
 
         fit_results.update({
             "A_val": A_v, "A_err": A_e, "B_val": B_v, "B_err": B_e,
             "equation_text": f"y = ({A_v:.2e}{A_e_str}) exp(({B_v:.2f}{B_e_str})x)",
-            "equation_latex": rf"y = ({A_v:.2e}{A_e_str}) e^{{({B_v:.2f}{B_e_str})x}}"
+            "equation_latex": rf"$y = ({A_v:.2e}{A_e_str}) e^{{({B_v:.2f}{B_e_str})x}}$"
         })
     elif plot_type == "片対数 (X軸対数)": # intercept = A (切片), slope = B (ln(x)の係数)
         A_v, A_e = i_val, i_err
         B_v, B_e = s_val, s_err
 
-        A_e_str = f" ± {A_e:.2f}" if not np.isnan(A_e) else ""
-        B_e_str = f" ± {B_e:.2f}" if not np.isnan(B_e) else ""
+        A_e_str = f" \pm {A_e:.2f}" if not np.isnan(A_e) else ""
+        B_e_str = f" \pm {B_e:.2f}" if not np.isnan(B_e) else ""
         fit_results.update({
             "A_val": A_v, "A_err": A_e, "B_val": B_v, "B_err": B_e,
             "equation_text": f"y = ({B_v:.2f}{B_e_str}) ln(x) + ({A_v:.2f}{A_e_str})",
-            "equation_latex": rf"y = ({B_v:.2f}{B_e_str}) \ln(x) + ({A_v:.2f}{A_e_str})"
+            "equation_latex": rf"$y = ({B_v:.2f}{B_e_str}) \ln(x) + ({A_v:.2f}{A_e_str})$"
         })
     elif plot_type == "両対数": # intercept = ln(A), slope = B
         A_v = np.exp(i_val)
         A_e = A_v * i_err if not np.isnan(i_err) else np.nan
         B_v, B_e = s_val, s_err
 
-        A_e_str = f" ± {A_e:.1e}" if not np.isnan(A_e) else ""
-        B_e_str = f" ± {B_e:.2f}" if not np.isnan(B_e) else ""
+        A_e_str = f" \pm {A_e:.1e}" if not np.isnan(A_e) else ""
+        B_e_str = f" \pm {B_e:.2f}" if not np.isnan(B_e) else ""
         fit_results.update({
             "A_val": A_v, "A_err": A_e, "B_val": B_v, "B_err": B_e,
             "equation_text": f"y = ({A_v:.2e}{A_e_str}) x^({B_v:.2f}{B_e_str})",
-            "equation_latex": rf"y = ({A_v:.2e}{A_e_str}) x^{{({B_v:.2f}{B_e_str})}}"
+            "equation_latex": rf"$y = ({A_v:.2e}{A_e_str}) x^{{({B_v:.2f}{B_e_str})}}$"
         })
         
     return fit_results
