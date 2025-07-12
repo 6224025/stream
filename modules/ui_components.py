@@ -28,21 +28,30 @@ def render_sidebar_main_settings():
     settings['show_legend'] = st.sidebar.checkbox("凡例を表示する", True)
     settings['show_fitting'] = st.sidebar.checkbox("最小二乗法でフィッティングを行う")
     settings['show_error_bars'] = st.sidebar.checkbox("エラーバーを表示する", False)
+    return settings
 
-    # 2本目の近似曲線
+def render_sidebar_second_fit_settings(graph_settings):
+    """サイドバーの2本目の近似曲線設定UI（範囲指定のみ）をレンダリングする"""
+    settings = {}
     st.sidebar.markdown("---")
     settings['show_fitting_2'] = st.sidebar.checkbox("範囲を指定して2本目の近似線を追加")
     if settings['show_fitting_2']:
-        # 2本目の凡例はここで直接取得
-        settings['fit_legend_label_2'] = st.sidebar.text_input("2本目の近似線の凡例", "範囲フィット", key="fit_legend_2")
         col_fit2_min, col_fit2_max = st.sidebar.columns(2)
         with col_fit2_min:
-            settings['fit_range_x_min'] = st.number_input("X軸の最小値", value=0.0, format="%.3f", step=0.1, key="fit_range_min")
+            # Streamlitの再実行時に値を保持するため、graph_settingsから現在の値を取得
+            min_val = graph_settings.get('fit_range_x_min', 0.0)
+            settings['fit_range_x_min'] = st.number_input("X軸の最小値", value=min_val, format="%.3f", step=0.1, key="fit_range_min")
         with col_fit2_max:
-            settings['fit_range_x_max'] = st.number_input("X軸の最大値", value=10.0, format="%.3f", step=0.1, key="fit_range_max")
-        if settings.get('fit_range_x_min', 0.0) >= settings.get('fit_range_x_max', 10.0):
+            max_val = graph_settings.get('fit_range_x_max', 10.0)
+            settings['fit_range_x_max'] = st.number_input("X軸の最大値", value=max_val, format="%.3f", step=0.1, key="fit_range_max")
+        
+        if settings['fit_range_x_min'] >= settings['fit_range_x_max']:
             st.sidebar.error("X軸の最大値は最小値より大きくしてください。")
+    return settings
 
+def render_sidebar_axis_range_settings(graph_settings):
+    """サイドバーの軸範囲設定UIをレンダリングする"""
+    settings = {}
     st.sidebar.subheader("軸範囲設定")
     settings['axis_range_mode'] = st.sidebar.selectbox(
         "軸範囲の指定方法", ["自動", "原点を含める", "手動"], index=0, help="グラフの表示範囲を設定します。"
@@ -58,7 +67,7 @@ def render_sidebar_main_settings():
         if settings.get('x_axis_min', 0.0) >= settings.get('x_axis_max', 10.0):
             st.sidebar.error("X軸の最大値は最小値より大きくしてください。")
 
-    settings['manual_y_axis'] = (settings['axis_range_mode'] == "手動") # Y軸も手動設定を共有
+    settings['manual_y_axis'] = (settings['axis_range_mode'] == "手動")
     if settings['manual_y_axis']:
         col_y_min, col_y_max = st.sidebar.columns(2)
         with col_y_min:
@@ -67,10 +76,9 @@ def render_sidebar_main_settings():
             settings['y_axis_max'] = st.number_input("Y軸 最大値", value=10.0, format="%.3f", step=0.1, key="manual_y_max")
         if settings.get('y_axis_min', 0.0) >= settings.get('y_axis_max', 10.0):
             st.sidebar.error("Y軸の最大値は最小値より大きくしてください。")
-
     return settings
 
-def render_sidebar_legend_settings(graph_settings, fit_results_1=None):
+def render_sidebar_legend_settings(graph_settings, fit_results_1=None, fit_results_2=None):
     """サイドバーの凡例設定UIをレンダリングする"""
     if not graph_settings.get('show_legend', True):
         return {}
@@ -78,21 +86,35 @@ def render_sidebar_legend_settings(graph_settings, fit_results_1=None):
     legend_settings = {}
     st.sidebar.subheader("凡例設定")
     
+    # 凡例のテキスト入力がリセットされないように、現在の設定値をvalueに渡す
     legend_settings['data_legend_label'] = st.sidebar.text_input(
-        "データ点の凡例", "測定値", key="data_legend_label"
+        "データ点の凡例", graph_settings.get('data_legend_label', "測定値"), key="data_legend_label"
     )
 
     if graph_settings.get('show_fitting'):
+        # 計算済みの近似式をデフォルトの凡例にする
         default_fit_legend = "近似曲線"
         if fit_results_1 and fit_results_1.get("equation_latex"):
             default_fit_legend = fit_results_1.get("equation_latex")
         
+        # ユーザーが入力した凡例があればそちらを優先する
+        current_legend = graph_settings.get('fit_legend_label', default_fit_legend)
         legend_settings['fit_legend_label'] = st.sidebar.text_input(
-            "近似曲線の凡例", value=default_fit_legend, key="$"+"fit_legend_label_1"+"$"
+            "1本目の近似線の凡例", value=current_legend, key="fit_legend_label_1"
+        )
+
+    if graph_settings.get('show_fitting_2'):
+        default_fit_legend_2 = "範囲フィット"
+        if fit_results_2 and fit_results_2.get("equation_latex"):
+            default_fit_legend_2 = fit_results_2.get("equation_latex")
+        
+        current_legend_2 = graph_settings.get('fit_legend_label_2', default_fit_legend_2)
+        legend_settings['fit_legend_label_2'] = st.sidebar.text_input(
+            "2本目の近似線の凡例", value=current_legend_2, key="fit_legend_label_2"
         )
 
     legend_settings['legend_fontsize'] = st.sidebar.slider(
-        "凡例の文字サイズ", 15, 20, 15, 1, help="凡例の文字サイズを設定します"
+        "凡例の文字サイズ", 15, 20, graph_settings.get('legend_fontsize', 15), 1, help="凡例の文字サイズを設定します"
     )
     return legend_settings
 

@@ -11,8 +11,14 @@ st.title("簡易グラフ作成アプリ")
 
 notification_was_shown = co.show_initial_update_notification()
 
-# サイドバーのメイン設定は常にレンダリング
-graph_settings = ui.render_sidebar_main_settings()
+# fit_results_1とfit_results_2を初期化（常に定義されていることを保証）
+fit_results_1 = None
+fit_results_2 = None
+
+# --- サイドバー設定の収集 ---
+# まず、すべてのサイドバーUI要素から設定値を取得し、graph_settingsを初期化
+main_settings = ui.render_sidebar_main_settings()
+graph_settings = main_settings.copy()
 
 # メインコンテンツの表示制御
 if not notification_was_shown:
@@ -27,20 +33,41 @@ if not notification_was_shown:
             st.write("読み込みデータプレビュー:")
             st.dataframe(df_orig.head(), height=200)
 
-    # --- フィッティング計算（UI描画の前） ---
-    fit_results_1 = None
-    if graph_settings.get('show_fitting') and df_numeric is not None and not df_numeric.empty:
+    # --- サイドバー（2本目の近似直線設定 - 範囲入力など、フィッティング結果に依存しないUI） ---
+    second_fit_settings = ui.render_sidebar_second_fit_settings(graph_settings)
+    graph_settings.update(second_fit_settings)
+
+    # --- サイドバー（軸範囲設定） ---
+    axis_range_settings = ui.render_sidebar_axis_range_settings(graph_settings)
+    graph_settings.update(axis_range_settings)
+
+    # --- フィッティング計算（UI設定の収集後） ---
+    if df_numeric is not None and not df_numeric.empty:
         df_plot_data = df_numeric.dropna()
         if not df_plot_data.empty:
-            fit_results_1 = fc.calculate_fitting_parameters_v3(
-                df_plot_data['x'].values, df_plot_data['y'].values, graph_settings["plot_type"]
-            )
+            if graph_settings.get('show_fitting'):
+                fit_results_1 = fc.calculate_fitting_parameters_v3(
+                    df_plot_data['x'].values, df_plot_data['y'].values, graph_settings["plot_type"]
+                )
+            
+            if graph_settings.get('show_fitting_2'):
+                min_x = graph_settings.get('fit_range_x_min')
+                max_x = graph_settings.get('fit_range_x_max')
+                # UIで範囲が正しく設定されているか確認
+                if min_x is not None and max_x is not None and min_x < max_x:
+                    df_fit_range = df_plot_data[(df_plot_data['x'] >= min_x) & (df_plot_data['x'] <= max_x)]
+                    if not df_fit_range.empty:
+                        fit_results_2 = fc.calculate_fitting_parameters_v3(
+                            df_fit_range['x'].values,
+                            df_fit_range['y'].values,
+                            graph_settings["plot_type"]
+                        )
+                    else:
+                        st.sidebar.warning("指定範囲にデータ点がありません。")
 
-    # --- サイドバー（凡例設定） ---
-    legend_settings = ui.render_sidebar_legend_settings(graph_settings, fit_results_1)
+    # --- サイドバー（凡例設定 - フィッティング計算後にレンダリング） ---
+    legend_settings = ui.render_sidebar_legend_settings(graph_settings, fit_results_1, fit_results_2)
     graph_settings.update(legend_settings)
-
-    co.display_sidebar_app_info()
 
     # --- グラフ描画 ---
     with plot_col:
@@ -66,7 +93,13 @@ if not notification_was_shown:
                         line_style='--', color='red'
                     )
 
-                # (2本目のフィッティングロジックはここに続く...)
+                if graph_settings.get("show_fitting_2") and fit_results_2 and not fit_results_2.get("error_message"):
+                    pg.plot_fit_line_on_final_axes(
+                        ax, final_xlim, df_plot_data['x'].values, fit_results_2, 
+                        graph_settings["plot_type"], graph_settings, 
+                        legend_label=graph_settings.get("fit_legend_label_2", ""),
+                        line_style=':', color='green'
+                    )
 
                 pg.apply_final_axes_and_legend(ax, final_xlim, final_ylim, graph_settings)
                 st.pyplot(fig)
@@ -80,6 +113,13 @@ if not notification_was_shown:
                         fit_results_1.get("slope_val") is not None,
                         graph_settings.get("show_fitting")
                     )
+                if graph_settings.get("show_fitting_2") and fit_results_2:
+                    ui.render_fitting_results_display(
+                        fit_results_2.get("equation_latex"),
+                        f"$R^2 = {fit_results_2.get('r_squared'):.4f}$" if fit_results_2.get('r_squared') is not None else "",
+                        fit_results_2.get("slope_val") is not None,
+                        graph_settings.get("show_fitting_2")
+                    )
 
                 ui.render_data_table_latex_export(df_orig, graph_settings)
 
@@ -87,4 +127,3 @@ if not notification_was_shown:
             st.warning("グラフを表示するには、まず有効なデータを入力してください。")
         elif not raw_data_str:
             st.info("左側のテキストエリアにデータを入力すると、ここにグラフが表示されます。")
-             
